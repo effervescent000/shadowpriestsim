@@ -96,8 +96,6 @@ class Sim:
                                 self.log.add_other(self.time, "Vampiric Touch begins casting.")
                             gcd = self.get_gcd()
                         elif self.mb.cooldown <= 0 and self.toon.cur_mana > self.mb.mana_cost:
-                            # TODO add proper casting integration. For now I'm just adding a cludge where the CD
-                            #  needs to be at -1.5 to cast
                             act = self.Action(self.toon, time_inc, self.mb)
                             self.clip_mind_flay()
                             if self.log_this is True:
