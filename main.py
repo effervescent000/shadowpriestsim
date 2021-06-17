@@ -2,7 +2,7 @@ import parse_file
 import sim
 
 pf = parse_file.ParseFile('spriest.xlsx')
-iterations = 10
+iterations = 5000
 duration = 2.5 * 60
 stat_weights = True
 toons = pf.toons

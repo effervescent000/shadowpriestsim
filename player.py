@@ -33,7 +33,7 @@ class Player:
             elif key == 'spell_haste':
                 self.spell_haste = value
             else:
-                print("Invalid value passed to assign_dict_stats!")
+                print("Invalid value {0} passed to assign_dict_stats!".format(value))
         self.calc_mp5()
 
     def calc_mp5(self):

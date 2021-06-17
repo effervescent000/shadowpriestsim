@@ -42,7 +42,7 @@ class Sim:
             self.toon.cur_mana = self.toon.max_mana
             damage = 0
             gcd = 0
-            act = self.Action()
+            act = self.Action(self.toon, time_inc)
             mana_pot_cd = 0
             shadowfiend_available = True
 
@@ -63,7 +63,6 @@ class Sim:
                         elif act.current_action is self.vt:
                             self.vt = self.apply_dot(self.vt)
                     if gcd <= 0:
-
                         # check for mana pot
                         if self.toon.cur_mana + 3000 < self.toon.max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -73,7 +72,7 @@ class Sim:
                             if self.log_this is True:
                                 self.log.add_mana_regen(mana_amt, self.time)
                         # now check for shadowfiend
-                        if self.toon.cur_mana / self.toon.max_mana < .3 and mana_pot_cd > 2000 \
+                        if self.toon.cur_mana < self.toon.max_mana * .3 and mana_pot_cd > 2000 \
                                 and shadowfiend_available:
                             # TODO figure out mechanics of actual shadowfiend. For now I'm just giving mana
                             shadowfiend_mana = 3000
@@ -87,11 +86,11 @@ class Sim:
 
                         elif self.swp.duration < 0 and self.toon.cur_mana > self.swp.mana_cost:
                             self.swp = self.apply_dot(self.swp)
-                            act = self.Action(self.swp)
+                            act = self.Action(self.toon, time_inc, self.swp)
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
                         elif self.vt.duration < 1500 and self.toon.cur_mana > self.vt.mana_cost:
-                            act = self.Action(self.vt)
+                            act = self.Action(self.toon, time_inc, self.vt)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, "Vampiric Touch begins casting.")
@@ -99,20 +98,20 @@ class Sim:
                         elif self.mb.cooldown <= 0 and self.toon.cur_mana > self.mb.mana_cost:
                             # TODO add proper casting integration. For now I'm just adding a cludge where the CD
                             #  needs to be at -1.5 to cast
-                            act = self.Action(self.mb)
+                            act = self.Action(self.toon, time_inc, self.mb)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, "Mind Blast begins casting.")
                             gcd = self.get_gcd()
                         elif self.swd.cooldown <= 0 and self.toon.cur_mana > self.swd.mana_cost:
                             self.swd.reset_time()
-                            act = self.Action(self.swd)
+                            act = self.Action(self.toon, time_inc, self.swd)
                             self.clip_mind_flay()
                             damage = damage + self.calc_damage(self.swd)
                             gcd = self.get_gcd()
                         elif self.toon.cur_mana > self.mf.mana_cost and act.current_action is not self.mf:
                             self.mf = self.apply_dot(self.mf)
-                            act = self.Action(self.mf)
+                            act = self.Action(self.toon, time_inc, self.mf)
                             gcd = self.get_gcd()
 
                 damage = damage + self.tic_dots()
@@ -201,12 +200,27 @@ class Sim:
             return True
 
     class Action:
-        def __init__(self, act=None):
+        def __init__(self, toon, time_inc, act=None):
             self.current_action = act
             self.duration = 0
+            if self.current_action is not None:
+                self.current_action.set_action_time(toon, time_inc)
 
-    class DoT:
+    class Spell:
         def __init__(self):
+            self.name = 'unset string'
+            self.action_time = 0
+
+        def set_action_time(self, toon, time_inc):
+            if self.action_time > 0:
+                self.action_time = self.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
+
+        def round_to_base(self, num, base):
+            return base * round(num/base)
+
+    class DoT(Spell):
+        def __init__(self):
+            super().__init__()
             self.name = 'unset string'
             self.action_time = 0
             self.duration = -100
@@ -218,8 +232,9 @@ class Sim:
         def reset_time(self):
             self.duration = self.max_duration
 
-    class DirectSpell:
+    class DirectSpell(Spell):
         def __init__(self):
+            super().__init__()
             self.name = 'unset string'
             self.action_time = 0
             self.cooldown = 0
