@@ -1,5 +1,5 @@
 def format_time(time):
-    return time / 100
+    return time / 1000
 
 
 class CombatLog:
