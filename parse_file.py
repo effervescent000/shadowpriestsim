@@ -6,7 +6,7 @@ class ParseFile:
 
     def __init__(self, fn):
         self.wb = load_workbook(fn)
-        self.sheet = self.wb.active
+        self.sheet = self.wb['data']
         self.player = player.Player("priest", 'base')
         row = 2
         self.toons = [self.parse_toon(self.player, row)]
