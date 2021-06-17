@@ -49,5 +49,3 @@ class Player:
             self.cur_mana = self.max_mana
         else:
             self.cur_mana = self.cur_mana + amt
-
-

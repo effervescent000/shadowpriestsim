@@ -1,8 +1,6 @@
 import random
 import combat_log
 
-import player
-
 
 class Sim:
     def __init__(self, toon, total_iterations, duration, logging=False, mode=None):
@@ -78,12 +76,12 @@ class Sim:
                         if self.toon.cur_mana / self.toon.max_mana < .3 and mana_pot_cd > 2000 \
                                 and shadowfiend_available:
                             # TODO figure out mechanics of actual shadowfiend. For now I'm just giving mana
-                            sfiend_mana = 3000
-                            self.toon.add_mana(sfiend_mana)
+                            shadowfiend_mana = 3000
+                            self.toon.add_mana(shadowfiend_mana)
                             shadowfiend_available = False
                             act.current_action = None
                             if self.log_this is True:
-                                self.log.add_mana_regen(sfiend_mana, self.time)
+                                self.log.add_mana_regen(shadowfiend_mana, self.time)
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
 
@@ -236,6 +234,7 @@ class Sim:
     class ShadowWordPain(DoT):
 
         def __init__(self):
+            super().__init__()
             self.name = "Shadow Word: Pain"
             self.action_time = 0
             self.duration = -100
@@ -247,6 +246,7 @@ class Sim:
     class VampiricTouch(DoT):
 
         def __init__(self):
+            super().__init__()
             self.name = 'Vampiric Touch'
             self.action_time = 1500
             self.duration = -100
@@ -258,6 +258,7 @@ class Sim:
     class MindFlay(DoT):
 
         def __init__(self):
+            super().__init__()
             self.name = 'Mind Flay'
             self.action_time = 0
             self.duration = -100
@@ -268,6 +269,7 @@ class Sim:
 
     class MindBlast(DirectSpell):
         def __init__(self):
+            super().__init__()
             self.name = 'Mind Blast'
             self.action_time = 1500
             self.cooldown = -100
@@ -278,6 +280,7 @@ class Sim:
 
     class ShadowWordDeath(DirectSpell):
         def __init__(self):
+            super().__init__()
             self.name = 'Shadow Word: Death'
             self.action_time = 0
             self.cooldown = -100
