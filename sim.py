@@ -219,7 +219,7 @@ class Sim:
 
     def deal_damage(self, spell):
         # extra modifiers are shadow weaving and misery, and shadowform
-        return round(spell.base_dmg + self.toon.spell_power * spell.coefficient * 1.10 * 1.05 * 1.15)
+        return round(spell.get_damage() + self.toon.spell_power * spell.coefficient * 1.10 * 1.05 * 1.15)
 
     def calc_damage(self, spell):
         damage = 0
@@ -263,6 +263,7 @@ class Sim:
         def __init__(self):
             self.name = 'unset string'
             self.action_time = 0
+            self.base_dmg = 0
 
         def set_action_time(self, toon, time_inc):
             if self.action_time > 0:
@@ -270,6 +271,9 @@ class Sim:
 
         def round_to_base(self, num, base):
             return base * round(num / base)
+
+        def get_damage(self):
+            return self.base_dmg * 1.1
 
     class DoT(Spell):
         def __init__(self):
@@ -294,11 +298,15 @@ class Sim:
             self.cooldown = 0
             self.max_cooldown = 0
             self.mana_cost = 0
-            self.base_dmg = 0
+            self.base_dmg = [0, 0]
             self.coefficient = 0
 
         def reset_time(self):
             self.cooldown = self.max_cooldown
+
+        def get_damage(self):
+            # TODO research if this is just a flat average or if it's more complex than that
+            return sum(self.base_dmg) / len(self.base_dmg) * 1.1
 
     class ShadowWordPain(DoT):
 
@@ -309,7 +317,7 @@ class Sim:
             self.duration = -100
             self.max_duration = 24000
             self.mana_cost = 575
-            self.base_dmg = 206 * 1.1
+            self.base_dmg = 206  # per tick
             self.coefficient = .183
 
     class VampiricTouch(DoT):
@@ -321,7 +329,7 @@ class Sim:
             self.duration = -100
             self.max_duration = 15000
             self.mana_cost = 425
-            self.base_dmg = 130 * 1.1
+            self.base_dmg = 130  # per tick
             self.coefficient = .2
 
     class MindFlay(DoT):
@@ -333,7 +341,7 @@ class Sim:
             self.duration = -100
             self.max_duration = 3000
             self.mana_cost = 196
-            self.base_dmg = 176 * 1.1
+            self.base_dmg = 176
             self.coefficient = .19
 
     class MindBlast(DirectSpell):
@@ -344,8 +352,7 @@ class Sim:
             self.cooldown = -100
             self.max_cooldown = 6000
             self.mana_cost = 382
-            self.base_dmg = 731 * 1.1
-            # TODO add actual variance to base damage for MB and SWD (need to research)
+            self.base_dmg = [711, 752]
             self.coefficient = .429
 
     class ShadowWordDeath(DirectSpell):
@@ -356,5 +363,5 @@ class Sim:
             self.cooldown = -100
             self.max_cooldown = 12000
             self.mana_cost = 309
-            self.base_dmg = 618 * 1.1
+            self.base_dmg = [572, 664]
             self.coefficient = .429
