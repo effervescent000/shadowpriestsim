@@ -60,6 +60,8 @@ class Sim:
 
             while self.time < duration:
                 self.toon.add_mana(mana_regen)
+                mana = self.toon.cur_mana
+                max_mana = self.toon.max_mana
                 if act.current_action is None or act.duration >= act.current_action.action_time:
                     # resolve current casts
                     if act.current_action is not None and act.duration == act.current_action.action_time:
@@ -79,7 +81,7 @@ class Sim:
                                         break
 
                         # check for mana pot
-                        if self.toon.cur_mana + 3000 < self.toon.max_mana and mana_pot_cd <= 0:
+                        if mana + 3000 < max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
                             mana_amt = random.randint(1800, 3000)
                             self.toon.add_mana(mana_amt)
@@ -87,7 +89,7 @@ class Sim:
                             if self.log_this is True:
                                 self.log.add_mana_regen(mana_amt, self.time)
                         # now check for shadowfiend
-                        if self.toon.cur_mana < self.toon.max_mana * .3 and mana_pot_cd > 2000 \
+                        if mana < max_mana * .3 and mana_pot_cd > 2000 \
                                 and shadowfiend_available:
                             # numbers based on https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
                             shadowfiend_mana = (2977 + self.toon.spell_power * 1.5) * .8 * 1 - .16 + self.toon.spell_hit
@@ -101,30 +103,30 @@ class Sim:
                             gcd = self.get_gcd()
 
                         # spell logic goes here
-                        elif self.swp.duration < 0 and self.toon.cur_mana > self.swp.mana_cost:
+                        elif self.swp.duration < 0 and mana > self.swp.mana_cost:
                             self.swp = self.apply_dot(self.swp)
                             act = self.Action(self.toon, time_inc, self.swp)
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
-                        elif self.vt.duration < 1500 and self.toon.cur_mana > self.vt.mana_cost:
+                        elif self.vt.duration < 1500 and mana > self.vt.mana_cost:
                             act = self.Action(self.toon, time_inc, self.vt)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, "Vampiric Touch begins casting.")
                             gcd = self.get_gcd()
-                        elif self.mb.cooldown <= 0 and self.toon.cur_mana > self.mb.mana_cost:
+                        elif self.mb.cooldown <= 0 and mana > self.mb.mana_cost:
                             act = self.Action(self.toon, time_inc, self.mb)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, "Mind Blast begins casting.")
                             gcd = self.get_gcd()
-                        elif self.swd.cooldown <= 0 and self.toon.cur_mana > self.swd.mana_cost:
+                        elif self.swd.cooldown <= 0 and mana > self.swd.mana_cost:
                             self.swd.reset_time()
                             act = self.Action(self.toon, time_inc, self.swd)
                             self.clip_mind_flay()
                             damage = damage + self.calc_damage(self.swd)
                             gcd = self.get_gcd()
-                        elif self.toon.cur_mana > self.mf.mana_cost and act.current_action is not self.mf:
+                        elif mana > self.mf.mana_cost and act.current_action is not self.mf:
                             self.mf = self.apply_dot(self.mf)
                             act = self.Action(self.toon, time_inc, self.mf)
                             gcd = self.get_gcd()
