@@ -24,7 +24,7 @@ def main():
         stat_weights.StatWeights(toons[0], iterations, duration)
     else:
         for x in toons:
-            toon_sim = sim.Sim(x, iterations, duration, True, 'v')
+            toon_sim = sim.Sim(x, iterations, duration, True, 's')
             print('Done simming row {}!'.format(x.name))
             simmed_dps[x.name] = toon_sim.dps
         for x in simmed_dps.items():

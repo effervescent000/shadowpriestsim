@@ -180,7 +180,9 @@ class Sim:
             return False
 
     def get_gcd(self):
-        gcd = round(1500 / (1 + self.toon.spell_haste))
+        # TODO for now adding in a cludge to mimic latency/reaction time (setting GCD to .1 second higher).
+        #  Find a better way to do this.
+        gcd = round(1600 / (1 + self.toon.spell_haste))
         if gcd < 750:
             gcd = 750
         return gcd
