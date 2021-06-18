@@ -129,6 +129,12 @@ class Sim:
                 self.log.finalize_log()
             self.cur_iterations = self.cur_iterations + 1
 
+    def is_channeling_mindflay(self, act):
+        if act.current_action is self.mf and act.current_action.duration < 3:
+            return True
+        else:
+            return False
+
     def get_gcd(self):
         gcd = round(1500 / (1 + self.toon.spell_haste))
         if gcd < 750:
