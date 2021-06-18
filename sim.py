@@ -161,12 +161,14 @@ class Sim:
                 self.log.add_damage(self.vt, new_damage, self.time)
             damage = damage + new_damage
         if self.mf.duration >= 0 and self.mf.duration % 1500 == 0:
-            # this isn't entirely accurate (it will cause MF to tick on application, but for now it will do)
+            # TODO fix MF to tick at the proper times, right now it ticks at the beginning, middle and end rather than
+            #  being back-loaded
             new_damage = self.deal_damage(self.mf)
             if self.log_this is True:
                 self.log.add_damage(self.mf, new_damage, self.time)
             damage = damage + new_damage
-        self.toon.add_mana(damage * .05)
+        if self.vt.duration >= 0:
+            self.toon.add_mana(damage * .05)
         return damage
 
     def deal_damage(self, spell):
@@ -184,7 +186,8 @@ class Sim:
                 damage = damage * 1.5
             if self.log_this is True:
                 self.log.add_damage(spell, damage, self.time)
-        self.toon.add_mana(damage * .05)
+        if self.vt.duration >= 0:
+            self.toon.add_mana(damage * .05)
         return damage
 
     def apply_dot(self, dot):
@@ -295,6 +298,7 @@ class Sim:
             self.max_cooldown = 6000
             self.mana_cost = 382
             self.base_dmg = 731 * 1.1
+            # TODO add actual variance to base damage for MB and SWD (need to research)
             self.coefficient = .429
 
     class ShadowWordDeath(DirectSpell):
