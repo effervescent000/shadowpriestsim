@@ -89,8 +89,9 @@ class Sim:
                         # now check for shadowfiend
                         if self.toon.cur_mana < self.toon.max_mana * .3 and mana_pot_cd > 2000 \
                                 and shadowfiend_available:
-                            # TODO figure out mechanics of actual shadowfiend. For now I'm just giving mana
-                            shadowfiend_mana = 3000
+                            # numbers based on https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
+                            shadowfiend_mana = (2977 + self.toon.spell_power * 1.5) * .8 * 1 - .16 + self.toon.spell_hit
+                            # the .8 modifier is assuming that the part has some shadow resist
                             self.toon.add_mana(shadowfiend_mana)
                             shadowfiend_available = False
                             act.current_action = None
