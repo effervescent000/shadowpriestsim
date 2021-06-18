@@ -1,5 +1,6 @@
 import random
 import combat_log
+import trinket
 
 
 class Sim:
@@ -27,6 +28,8 @@ class Sim:
         time_inc = 100
         # I'm fudging mp5 right now
         mana_regen = self.toon.mp5 / 5 * (time_inc / 1000)
+        proc_trinkets = self.toon.get_proc_trinkets()
+
         if logging is True:
             iteration_to_log = random.randint(1, total_iterations - 1)
             # pick a random iteration to log
@@ -42,6 +45,9 @@ class Sim:
             self.toon.cur_mana = self.toon.max_mana
             damage = 0
             gcd = 0
+            trinket_gcd = 0
+            for x in self.toon.trinkets:
+                x.reset_trinket()
             act = self.Action(self.toon, time_inc)
             mana_pot_cd = 0
             shadowfiend_available = True
@@ -63,6 +69,15 @@ class Sim:
                         elif act.current_action is self.vt:
                             self.vt = self.apply_dot(self.vt)
                     if gcd <= 0:
+                        # use trinkets if possible
+                        if self.toon.trinkets is not None:
+                            if trinket_gcd <= 0:
+                                for x in self.toon.trinkets:
+                                    if x.cooldown <= 0:
+                                        self.start_trinket_effect(x)
+                                        trinket_gcd = 30000
+                                        break
+
                         # check for mana pot
                         if self.toon.cur_mana + 3000 < self.toon.max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -84,6 +99,7 @@ class Sim:
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
 
+                        # spell logic goes here
                         elif self.swp.duration < 0 and self.toon.cur_mana > self.swp.mana_cost:
                             self.swp = self.apply_dot(self.swp)
                             act = self.Action(self.toon, time_inc, self.swp)
@@ -114,20 +130,48 @@ class Sim:
 
                 damage = damage + self.tic_dots()
 
-                mana_pot_cd = mana_pot_cd - time_inc
-                self.swp.duration = self.swp.duration - time_inc
-                self.vt.duration = self.vt.duration - time_inc
-                self.mf.duration = self.mf.duration - time_inc
-                self.mb.cooldown = self.mb.cooldown - time_inc
-                self.swd.cooldown = self.swd.cooldown - time_inc
-                gcd = gcd - time_inc
-                act.duration = act.duration + time_inc
-                self.time = self.time + time_inc
+                # end active trinkets
+                if self.toon.trinkets is not None:
+                    for x in self.toon.trinkets:
+                        if x.active is True and x.duration <= 0:
+                            self.end_trinket_effect(x)
+                            x.active = False
+                        x.increment_time(time_inc)
+
+                # see if trinket proc'd from this action
+                if gcd == 1.5:
+                    if proc_trinkets[0] is True:
+                        for x in proc_trinkets[1]:
+                            if x.cooldown <= 0:
+                                if random.random() < x.proc_chance:
+                                    x.use_trinket()
+
+                mana_pot_cd -= time_inc
+                self.swp.duration -= time_inc
+                self.vt.duration -= time_inc
+                self.mf.duration -= time_inc
+                self.mb.cooldown -= time_inc
+                self.swd.cooldown -= time_inc
+                gcd -= time_inc
+                trinket_gcd -= time_inc
+                act.duration += time_inc
+                self.time += time_inc
 
             self.dps_list.append(damage / (duration / 1000))
             if self.log_this is True:
                 self.log.finalize_log()
             self.cur_iterations = self.cur_iterations + 1
+
+    def start_trinket_effect(self, t):
+        t.use_trinket()
+        if self.log_this is True:
+            self.log.add_other(self.time, 'Trinket {0} used.'.format(t.name))
+        self.toon.modify_stat(t.stat[1], t.stat[0])
+
+    def end_trinket_effect(self, t):
+        self.toon.modify_stat(t.stat[1], t.stat[0] * -1)
+        if self.log_this is True:
+            self.log.add_other(self.time, 'Trinket {0} effect removed.'.format(t.name))
 
     def is_channeling_mindflay(self, act):
         if act.current_action is self.mf and act.current_action.duration < 3:
@@ -223,7 +267,7 @@ class Sim:
                 self.action_time = self.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
 
         def round_to_base(self, num, base):
-            return base * round(num/base)
+            return base * round(num / base)
 
     class DoT(Spell):
         def __init__(self):
@@ -235,6 +279,7 @@ class Sim:
             self.mana_cost = 0
             self.base_dmg = 0
             self.coefficient = 0
+            # TODO add spellpower snapshotting
 
         def reset_time(self):
             self.duration = self.max_duration

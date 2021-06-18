@@ -1,4 +1,5 @@
 import math
+import trinket
 
 
 class Player:
@@ -15,6 +16,15 @@ class Player:
         self.max_mana = 0
         self.cur_mana = 0
         self.mp5 = 0
+        self.trinkets = [None, None]
+
+        self.stat_key = {
+            'spp': self.spell_power,
+            'spc': self.spell_crit,
+            'sph': self.spell_haste,
+            'spi': self.spirit,
+            'int': self.intellect
+        }
 
     def assign_dict_stats(self, stats_dict):
         for key, value in stats_dict.items():
@@ -32,6 +42,10 @@ class Player:
                 self.max_mana = value
             elif key == 'spell_haste':
                 self.spell_haste = value
+            elif key == 'trinket 1':
+                self.trinkets[0] = trinket.Trinket(value)
+            elif key == 'trinket 2':
+                self.trinkets[1] = trinket.Trinket(value)
             else:
                 print("Invalid value {0} passed to assign_dict_stats!".format(value))
         self.calc_mp5()
@@ -49,3 +63,15 @@ class Player:
             self.cur_mana = self.max_mana
         else:
             self.cur_mana = self.cur_mana + amt
+
+    def get_proc_trinkets(self):
+        answer = [False, []]
+        for x in self.trinkets:
+            if x is not None:
+                if x.on_use is False:
+                    answer[0] = True
+                    answer[1].append(x)
+        return answer
+
+    def modify_stat(self, string, amt):
+        self.stat_key[string] += amt

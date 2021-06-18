@@ -31,7 +31,7 @@ class ParseFile:
     def parse_toon(self, toon, row):
         # first set baseline stats
         stats_dict = {}
-        for x in range(1, 8):
+        for x in range(1, 10):
             stats_dict[self.sheet.cell(1, x).value] = self.sheet.cell(row, x).value
         toon.assign_dict_stats(stats_dict)
         return toon

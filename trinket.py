@@ -1,3 +1,6 @@
+
+
+
 class Trinket:
     def __init__(self, name):
         self.name = name.lower()
@@ -8,6 +11,9 @@ class Trinket:
         self.duration = 0
         self.on_use = True
         self.proc_chance = 0
+        self.active = False
+
+        self.get_trinket()
 
     def get_trinket(self):
         if self.name == 'vengeance of the illidari':
@@ -32,7 +38,13 @@ class Trinket:
     def use_trinket(self):
         self.cooldown = self.max_cooldown
         self.duration = self.max_duration
+        self.active = True
 
     def increment_time(self, time_inc):
         self.cooldown = self.cooldown - time_inc
         self.duration = self.duration - time_inc
+
+    def reset_trinket(self):
+        self.active = False
+        self.cooldown = 0
+        self.duration = 0
