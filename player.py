@@ -47,10 +47,10 @@ class Player:
                 self.trinkets[0] = trinket.Trinket(value)
             elif key == 'trinket 2':
                 self.trinkets[1] = trinket.Trinket(value)
-            elif key == 'wand_dps':
+            elif key == 'wand dps':
                 self.wand_dps = value
             else:
-                print("Invalid value {0} passed to assign_dict_stats!".format(value))
+                print("Invalid value {0} passed to assign_dict_stats!".format(key))
         self.calc_mp5()
 
     def calc_mp5(self):
