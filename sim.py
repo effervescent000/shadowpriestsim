@@ -135,7 +135,10 @@ class Sim:
                         # wand if OOM
                         # TODO improve wanding logic
                         else:
-                            damage += self.toon.wand_dps / 1.5
+                            wand_damage = self.toon.wand_dps * 1.5
+                            damage += wand_damage
+                            if self.log_this is True:
+                                self.log.add_wand(wand_damage, self.time)
                             gcd = self.get_gcd()
 
                 damage = damage + self.tic_dots()
