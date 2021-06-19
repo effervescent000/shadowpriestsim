@@ -60,9 +60,16 @@ class StatWeights:
     def output_weights(self):
         print('( Pawn: v1: "shadow": Intellect={0}, SpellHasteRating={1}, SpellCritRating={2}, ShadowSpellDamage={3}, '
               'SpellDamage={3}, SpellHitRating={4}, Spirit={5}, Mp5=0.5)'.format(
-            self.stat_values['intellect'],
-            self.stat_values['spell_haste'],
-            self.stat_values['spell_crit'],
-            self.stat_values['spell_power'],
-            self.stat_values['spell_hit'],
-            self.stat_values['spirit']))
+                self.check_stat_weight(self.stat_values['intellect']),
+                self.check_stat_weight(self.stat_values['spell_haste']),
+                self.check_stat_weight(self.stat_values['spell_crit']),
+                self.check_stat_weight(self.stat_values['spell_power']),
+                self.check_stat_weight(self.stat_values['spell_hit']),
+                self.check_stat_weight(self.stat_values['spirit'])))
+
+    @staticmethod
+    def check_stat_weight(weight):
+        if weight < 0:
+            return 0
+        else:
+            return weight

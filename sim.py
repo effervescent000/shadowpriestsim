@@ -130,6 +130,7 @@ class Sim:
                             self.mf = self.apply_dot(self.mf)
                             act = self.Action(self.toon, time_inc, self.mf)
                             gcd = self.get_gcd()
+                        # TODO add in wanding here if OOM
 
                 damage = damage + self.tic_dots()
 
