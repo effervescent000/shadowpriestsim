@@ -24,6 +24,7 @@ def main():
         stat_weights.StatWeights(toons[0], iterations, duration)
     else:
         for x in toons:
+            # TODO integrate logging mode into command line
             toon_sim = sim.Sim(x, iterations, duration, True, 'v')
             print('Done simming row {}!'.format(x.name))
             simmed_dps[x.name] = toon_sim.dps

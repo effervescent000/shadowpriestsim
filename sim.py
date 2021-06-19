@@ -59,6 +59,7 @@ class Sim:
             self.swd = self.ShadowWordDeath()
 
             while self.time < duration:
+                # TODO implement inner focus
                 self.toon.add_mana(mana_regen)
                 mana = self.toon.cur_mana
                 max_mana = self.toon.max_mana
