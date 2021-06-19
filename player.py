@@ -17,6 +17,7 @@ class Player:
         self.cur_mana = 0
         self.mp5 = 0
         self.trinkets = [None, None]
+        self.wand_dps = 0
 
         self.stat_key = {
             'spp': self.spell_power,
@@ -46,6 +47,8 @@ class Player:
                 self.trinkets[0] = trinket.Trinket(value)
             elif key == 'trinket 2':
                 self.trinkets[1] = trinket.Trinket(value)
+            elif key == 'wand_dps':
+                self.wand_dps = value
             else:
                 print("Invalid value {0} passed to assign_dict_stats!".format(value))
         self.calc_mp5()

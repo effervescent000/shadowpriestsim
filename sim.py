@@ -127,11 +127,16 @@ class Sim:
                             self.clip_mind_flay()
                             damage = damage + self.calc_damage(self.swd)
                             gcd = self.get_gcd()
-                        elif mana > self.mf.mana_cost and act.current_action is not self.mf:
-                            self.mf = self.apply_dot(self.mf)
-                            act = self.Action(self.toon, time_inc, self.mf)
+                        elif mana > self.mf.mana_cost:
+                            if act.current_action is not self.mf:
+                                self.mf = self.apply_dot(self.mf)
+                                act = self.Action(self.toon, time_inc, self.mf)
+                                gcd = self.get_gcd()
+                        # wand if OOM
+                        # TODO improve wanding logic
+                        else:
+                            damage += self.toon.wand_dps / 1.5
                             gcd = self.get_gcd()
-                        # TODO add in wanding here if OOM
 
                 damage = damage + self.tic_dots()
 
