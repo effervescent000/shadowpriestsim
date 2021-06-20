@@ -33,7 +33,7 @@ class Trinket:
             self.max_duration = 20000
         elif self.name == 'living ruby serpent' or self.name == 'figurine - living ruby serpent':
             self.stat = [150, 'spp']
-            self.max_cooldown = 5 * 60 * 1000
+            self.max_cooldown = 300000
             self.max_duration = 20000
 
     def use_trinket(self):
