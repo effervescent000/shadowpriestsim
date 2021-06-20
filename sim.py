@@ -155,7 +155,7 @@ class Sim:
                         x.increment_time(time_inc)
 
                 # see if trinket proc'd from this action
-                if gcd == 1.5:
+                if gcd == self.get_gcd():
                     if proc_trinkets[0] is True:
                         for x in proc_trinkets[1]:
                             if x.cooldown <= 0:
