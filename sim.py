@@ -32,8 +32,8 @@ class Sim:
         proc_trinkets = self.toon.get_proc_trinkets()
 
         if logging is True:
-            iteration_to_log = random.randint(1, total_iterations - 1)
             # pick a random iteration to log
+            iteration_to_log = random.randint(1, total_iterations - 1)
 
         while self.cur_iterations < total_iterations:
             if logging is True:
@@ -47,8 +47,6 @@ class Sim:
             damage = 0
             gcd = 0
             trinket_gcd = 0
-            for x in self.toon.trinkets:
-                x.reset_trinket()
             act = self.Action(self.toon, time_inc)
             mana_pot_cd = 0
             shadowfiend_available = True
@@ -83,7 +81,6 @@ class Sim:
                                         break
 
 						# TODO figure out how to only clip Mind Flay if it's shortly after a tick
-
                         # check for mana pot
                         if mana + 3000 < max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -130,7 +127,7 @@ class Sim:
                             self.swd.reset_time()
                             act = self.Action(self.toon, time_inc, self.swd)
                             self.clip_mind_flay()
-                            damage = damage + self.calc_damage(self.swd)
+                            damage += self.calc_damage(self.swd)
                             gcd = self.get_gcd()
                         elif mana > self.mf.mana_cost:
                             if act.current_action is not self.mf:
@@ -201,7 +198,7 @@ class Sim:
             self.log.add_other(self.time, 'Trinket {0} effect removed.'.format(t.name))
 
     def is_channeling_mind_flay(self, act):
-        if act.current_action is self.mf and act.current_action.duration < 3:
+        if act.current_action is self.mf and act.current_action.duration < act.current_action.max_duration:
             return True
         else:
             return False
@@ -285,7 +282,7 @@ class Sim:
             if self.current_action is not None:
                 self.current_action.set_action_time(toon, time_inc)
                 # I'm not sure this will work but I'm on my ipad rn so I can't check easily
-                if self.current_action == mf:
+                if isinstance(self.current_action, MindFlay):
                 	self.ticks = mf.get_ticks(time_inc, toon)
 
     class Spell:
