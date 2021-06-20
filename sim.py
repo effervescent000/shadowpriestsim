@@ -161,6 +161,7 @@ class Sim:
                             if x.cooldown <= 0:
                                 if random.random() < x.proc_chance:
                                     x.use_trinket()
+                                    self.start_trinket_effect(x)
 
                 mana_pot_cd -= time_inc
                 self.swp.duration -= time_inc
@@ -317,6 +318,8 @@ class Sim:
             self.max_cooldown = 0
             self.mana_cost = 0
             self.base_dmg = [0, 0]
+            # base_dmg is for spells with damage ranges, the first number should be the lower end, the second is the
+            # higher end
             self.coefficient = 0
 
         def reset_time(self):
