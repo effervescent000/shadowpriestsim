@@ -82,6 +82,8 @@ class Sim:
                                         trinket_gcd = 30000
                                         break
 
+						# TODO figure out how to only clip Mind Flay if it's shortly after a tick
+
                         # check for mana pot
                         if mana + 3000 < max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -97,7 +99,7 @@ class Sim:
                             # https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
                             # TODO actually sim lil guys' attacks n stuff
                             shadowfiend_mana = (2977 + self.toon.spell_power * 1.5) * .8 * 1 - .16 + self.toon.spell_hit
-                            # the .8 modifier is assuming that the part has some shadow resist
+                            # the .8 modifier is assuming that the target has some shadow resist
                             self.toon.add_mana(shadowfiend_mana)
                             shadowfiend_available = False
                             act.current_action = None
