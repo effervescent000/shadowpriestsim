@@ -10,30 +10,35 @@ class ParseFile:
         self.wb = load_workbook(fn)
         self.sheet = self.wb['data']
         self.player = player.Player("priest", 'base')
-        row = 2
-        self.toons = [self.parse_toon(self.player, row)]
+        col = 2
+        self.toons = [self.parse_toon(self.player, col)]
 
         if self.check_comparison() is True:
-            row = 3
+            col = 3
             comp_num = 1
-            while self.sheet.cell(row, 1).value is not None:
+            while self.sheet.cell(2, col).value is not None:
                 new_toon = player.Player("priest", comp_num)
-                self.toons.append(self.parse_toon(new_toon, row))
+                self.toons.append(self.parse_toon(new_toon, col))
 
                 comp_num = comp_num + 1
-                row = row + 1
+                col = col + 1
 
     def check_comparison(self):
-        row = 3
-        if self.sheet.cell(row, 1).value is not None:
+        col = 3
+        if self.sheet.cell(1, col).value is not None:
             return True
         else:
             return False
 
-    def parse_toon(self, toon, row):
+    def parse_toon(self, toon, col):
         # first set baseline stats
         stats_dict = {}
-        for x in range(1, 11):
-            stats_dict[self.sheet.cell(1, x).value] = self.sheet.cell(row, x).value
+        row = 2
+        string = string = self.sheet.cell(row, 1).value
+
+        while string != '###talents':
+            stats_dict[self.sheet.cell(row, 1).value] = self.sheet.cell(row, col).value
+            row += 1
+            string = self.sheet.cell(row, 1).value
         toon.assign_dict_stats(stats_dict)
         return toon

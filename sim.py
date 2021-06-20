@@ -371,10 +371,14 @@ class Sim:
             self.name = 'Mind Blast'
             self.action_time = 1500
             self.cooldown = -100
-            self.max_cooldown = 6000
+            self.max_cooldown = 8000
             self.mana_cost = 382
             self.base_dmg = [711, 752]
             self.coefficient = .429
+
+        def get_cd(self, toon):
+            # TODO this should check the number of points in improved mind blast and adjust the CD accordingly
+            pass
 
     class ShadowWordDeath(DirectSpell):
         def __init__(self):
