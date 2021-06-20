@@ -375,10 +375,7 @@ class Sim:
 				for x in ticks:
 					x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
 			return ticks	
-							
-						
-						
-				
+			
     class MindBlast(DirectSpell):
         def __init__(self):
             super().__init__()
@@ -391,8 +388,7 @@ class Sim:
             self.coefficient = .429
 
         def get_cd(self, toon):
-            # TODO this should check the number of points in improved mind blast and adjust the CD accordingly
-            pass
+            self.max_cooldown -= 500 * toon.improved_mind_blast
 
     class ShadowWordDeath(DirectSpell):
         def __init__(self):
