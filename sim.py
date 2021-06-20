@@ -90,7 +90,7 @@ class Sim:
                             if self.log_this is True:
                                 self.log.add_mana_regen(mana_amt, self.time)
                         # now check for shadowfiend
-                        if mana < max_mana * .3 and mana_pot_cd > 2000 \
+                        if mana < max_mana * .3 and mana_pot_cd > 20000 \
                                 and shadowfiend_available:
                             # numbers based on
                             # https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
@@ -114,13 +114,13 @@ class Sim:
                             act = self.Action(self.toon, time_inc, self.vt)
                             self.clip_mind_flay()
                             if self.log_this is True:
-                                self.log.add_other(self.time, "Vampiric Touch begins casting.")
+                                self.log.add_other(self.time, 'Vampiric Touch begins casting.')
                             gcd = self.get_gcd()
                         elif self.mb.cooldown <= 0 and mana > self.mb.mana_cost:
                             act = self.Action(self.toon, time_inc, self.mb)
                             self.clip_mind_flay()
                             if self.log_this is True:
-                                self.log.add_other(self.time, "Mind Blast begins casting.")
+                                self.log.add_other(self.time, 'Mind Blast begins casting.')
                             gcd = self.get_gcd()
                         elif self.swd.cooldown <= 0 and mana > self.swd.mana_cost:
                             self.swd.reset_time()
@@ -133,16 +133,14 @@ class Sim:
                                 self.mf = self.apply_dot(self.mf)
                                 act = self.Action(self.toon, time_inc, self.mf)
                                 gcd = self.get_gcd()
-                        # TODO make it so that if the simmed toon goes OOM, it will sit and wand and regen for a bit
-                        #  rather blowing all its mana mind flaying
-                        # wand if OOM
+                        # sit and wand for 10 seconds if OOM
                         # TODO improve wanding logic
                         else:
-                            wand_damage = self.toon.wand_dps * 1.5
+                            wand_damage = self.toon.wand_dps * 10
                             damage += wand_damage
                             if self.log_this is True:
                                 self.log.add_wand(wand_damage, self.time)
-                            gcd = self.get_gcd()
+                            gcd = 10000
 
                 damage = damage + self.tic_dots()
 
