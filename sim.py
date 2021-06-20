@@ -69,7 +69,7 @@ class Sim:
                     if act.current_action is not None and act.duration == act.current_action.action_time:
                         if act.current_action is self.mb:
                             self.mb.reset_time()
-                            damage = damage + self.calc_damage(self.mb)
+                            damage += self.calc_damage(self.mb)
                         elif act.current_action is self.vt:
                             self.vt = self.apply_dot(self.vt)
                     if gcd <= 0:
@@ -95,6 +95,7 @@ class Sim:
                                 and shadowfiend_available:
                             # numbers based on
                             # https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
+                            # TODO actually sim lil guys' attacks n stuff
                             shadowfiend_mana = (2977 + self.toon.spell_power * 1.5) * .8 * 1 - .16 + self.toon.spell_hit
                             # the .8 modifier is assuming that the part has some shadow resist
                             self.toon.add_mana(shadowfiend_mana)
@@ -135,7 +136,7 @@ class Sim:
                                 act = self.Action(self.toon, time_inc, self.mf)
                                 gcd = self.get_gcd()
                         # sit and wand for 10 seconds if OOM
-                        # TODO improve wanding logic
+                        # TODO get actual wand stats and sim wands
                         else:
                             wand_damage = self.toon.wand_dps * 10
                             damage += wand_damage
@@ -143,7 +144,7 @@ class Sim:
                                 self.log.add_wand(wand_damage, self.time)
                             gcd = 10000
 
-                damage = damage + self.tic_dots()
+                damage += self.tic_dots()
 
                 # end active trinkets
                 if self.toon.trinkets is not None:
@@ -337,7 +338,7 @@ class Sim:
 
         def __init__(self):
             super().__init__()
-            self.name = "Shadow Word: Pain"
+            self.name = 'Shadow Word: Pain'
             self.action_time = 0
             self.duration = -100
             self.max_duration = 24000

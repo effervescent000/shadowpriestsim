@@ -54,7 +54,7 @@ class Player:
 
     def assign_talents(self, talent_dict):
         for key, value in talent_dict.items():
-            if key == 'imp mb':
+            if key == 'imp mb' or key == 'imb' or key == 'improved mind blast':
                 self.improved_mind_blast = value
             elif key == 'fm' or key == 'focused mind':
                 self.focused_mind = value
