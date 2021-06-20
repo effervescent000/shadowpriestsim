@@ -229,18 +229,18 @@ class Sim:
             new_damage = self.deal_damage(self.mf)
             if self.log_this is True:
                 self.log.add_damage(self.mf, new_damage, self.time)
-            damage = damage + new_damage
+            damage += new_damage
         if self.vt.duration >= 0:
             self.toon.add_mana(damage * .05)
         return damage
 
     def deal_damage(self, spell):
         # extra modifiers are shadow weaving, misery, and shadowform
-        return round(spell.get_damage() + self.toon.spell_power * spell.coefficient * 1.10 * 1.05 * 1.15)
+        return round((spell.get_damage() + self.toon.spell_power * spell.coefficient) * 1.10 * 1.05 * 1.15)
 
     def calc_damage(self, spell):
         damage = 0
-        self.toon.cur_mana = self.toon.cur_mana - spell.mana_cost
+        self.toon.cur_mana -= spell.mana_cost
 
         if self.try_hit(spell) is True:
             damage = self.deal_damage(spell)
