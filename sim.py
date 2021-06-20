@@ -319,7 +319,7 @@ class Sim:
 
         def get_damage(self):
             # TODO research if this is just a flat average or if it's more complex than that
-            return sum(self.base_dmg) / len(self.base_dmg) * 1.1
+            return random.randint(self.base_dmg[0], self.base_dmg[1]) * 1.1
 
     class ShadowWordPain(DoT):
 
