@@ -56,7 +56,7 @@ class Sim:
             self.swp = self.ShadowWordPain()
             self.vt = self.VampiricTouch()
             self.mf = self.MindFlay()
-            self.mb = self.MindBlast()
+            self.mb = self.MindBlast(self.toon)
             self.swd = self.ShadowWordDeath()
 
             while self.time < duration:
@@ -382,7 +382,7 @@ class Sim:
 			self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
 					
     class MindBlast(DirectSpell):
-        def __init__(self):
+        def __init__(self, toon):
             super().__init__()
             self.name = 'Mind Blast'
             self.action_time = 1500
@@ -391,6 +391,9 @@ class Sim:
             self.mana_cost = 382
             self.base_dmg = [711, 752]
             self.coefficient = .429
+            
+            self.get_cd(toon)
+           
 
         def get_cd(self, toon):
             self.max_cooldown -= 500 * toon.improved_mind_blast
