@@ -365,6 +365,7 @@ class Sim:
             self.name = 'Mind Flay'
             self.action_time = 0
             self.duration = -100
+            self.base_duration = 3000
             self.max_duration = 3000
             self.mana_cost = 196
             self.base_dmg = 176
@@ -377,6 +378,9 @@ class Sim:
 					x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
 			return ticks	
 			
+		def reset_time(toon, time_inc):
+			self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
+					
     class MindBlast(DirectSpell):
         def __init__(self):
             super().__init__()
