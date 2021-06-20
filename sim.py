@@ -222,12 +222,12 @@ class Sim:
             new_damage = self.deal_damage(self.swp)
             if self.log_this is True:
                 self.log.add_damage(self.swp, new_damage, self.time)
-            damage = damage + new_damage
+            damage += new_damage
         if self.vt.duration >= 0 and self.vt.duration % 3000 == 0 and self.vt.duration != 15000:
             new_damage = self.deal_damage(self.vt)
             if self.log_this is True:
                 self.log.add_damage(self.vt, new_damage, self.time)
-            damage = damage + new_damage
+            damage += new_damage
         if self.mf.duration >= 0 and self.mf.duration % 1500 == 0:
             # TODO fix MF to tick at the proper times, right now it ticks at the beginning, middle and end rather than
             #  being back-loaded
@@ -369,7 +369,16 @@ class Sim:
             self.mana_cost = 196
             self.base_dmg = 176
             self.coefficient = .19
-
+            
+        def get_ticks(self, time_inc, toon):
+			# so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head around this
+			ticks = [0, 1000, 2000]
+				for x in ticks:
+					x = round_to_base(x / (1 + toon.spell_haste), time_inc)
+							
+						
+						
+				
     class MindBlast(DirectSpell):
         def __init__(self):
             super().__init__()
