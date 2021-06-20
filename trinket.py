@@ -1,6 +1,3 @@
-
-
-
 class Trinket:
     def __init__(self, name):
         self.name = name.lower()
@@ -33,6 +30,10 @@ class Trinket:
         elif self.name == 'icon of the silver crescent':
             self.stat = [155, 'spp']
             self.max_cooldown = 120000
+            self.max_duration = 20000
+        elif self.name == 'living ruby serpent' or self.name == 'figurine - living ruby serpent':
+            self.stat = [150, 'spp']
+            self.max_cooldown = 5 * 60 * 1000
             self.max_duration = 20000
 
     def use_trinket(self):
