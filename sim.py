@@ -1,5 +1,6 @@
 import random
 import combat_log
+import utils
 import trinket
 
 
@@ -172,6 +173,7 @@ class Sim:
                 act.duration += time_inc
                 self.time += time_inc
 
+			# end of iteration stuff here
             self.dps_list.append(damage / (duration / 1000))
             # end any trinkets that are currently active
             if self.toon.trinkets is not None:
@@ -182,7 +184,7 @@ class Sim:
 
             if self.log_this is True:
                 self.log.finalize_log()
-            self.cur_iterations = self.cur_iterations + 1
+            self.cur_iterations += 1
 
     def start_trinket_effect(self, t):
         t.use_trinket()
@@ -201,10 +203,11 @@ class Sim:
         else:
             return False
 
-    def get_gcd(self):
+    def get_gcd(self, time_inc=10):
         # TODO for now adding in a cludge to mimic latency/reaction time (setting GCD to .1 second higher).
         #  Find a better way to do this.
-        gcd = round(1600 / (1 + self.toon.spell_haste))
+        gcd = utils.round_to_base(1600 / (1 + self.toon.spell_haste), time_inc)
+        # gcd can't be lowered below .75 seconds
         if gcd < 750:
             gcd = 750
         return gcd
@@ -228,9 +231,7 @@ class Sim:
             if self.log_this is True:
                 self.log.add_damage(self.vt, new_damage, self.time)
             damage += new_damage
-        if self.mf.duration >= 0 and self.mf.duration % 1500 == 0:
-            # TODO fix MF to tick at the proper times, right now it ticks at the beginning, middle and end rather than
-            #  being back-loaded
+        if self.mf.duration >= 0 and self.mf.duration in act.ticks:
             new_damage = self.deal_damage(self.mf)
             if self.log_this is True:
                 self.log.add_damage(self.mf, new_damage, self.time)
@@ -263,7 +264,7 @@ class Sim:
             dot.reset_time()
             if self.log_this is True:
                 self.log.add_dot_application(dot, self.time)
-        self.toon.cur_mana = self.toon.cur_mana - dot.mana_cost
+        self.toon.cur_mana -= dot.mana_cost
         return dot
 
     def try_hit(self, spell=None):
@@ -280,6 +281,9 @@ class Sim:
             self.duration = 0
             if self.current_action is not None:
                 self.current_action.set_action_time(toon, time_inc)
+                # I'm not sure this will work but I'm on my ipad rn so I can't check easily
+                if self.current_action == mf:
+                	self.ticks = mf.get_ticks(time_inc, toon)
 
     class Spell:
         def __init__(self):
@@ -289,12 +293,7 @@ class Sim:
 
         def set_action_time(self, toon, time_inc):
             if self.action_time > 0:
-                self.action_time = self.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
-
-        @staticmethod
-        # may be worth adding this to a utils file or something instead of having it here
-        def round_to_base(num, base):
-            return base * round(num / base)
+                self.action_time = utils.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
 
         def get_damage(self):
             return self.base_dmg * 1.1
@@ -374,7 +373,8 @@ class Sim:
 			# so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head around this
 			ticks = [0, 1000, 2000]
 				for x in ticks:
-					x = round_to_base(x / (1 + toon.spell_haste), time_inc)
+					x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
+			return ticks	
 							
 						
 						
