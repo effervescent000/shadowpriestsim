@@ -1,7 +1,6 @@
 import random
 import combat_log
 import utils
-import trinket
 
 
 class Sim:
@@ -80,7 +79,7 @@ class Sim:
                                         trinket_gcd = 30000
                                         break
 
-						# TODO figure out how to only clip Mind Flay if it's shortly after a tick
+                                    # TODO figure out how to only clip Mind Flay if it's shortly after a tick
                         # check for mana pot
                         if mana + 3000 < max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -173,7 +172,7 @@ class Sim:
                 act.duration += time_inc
                 self.time += time_inc
 
-			# end of iteration stuff here
+            # end of iteration stuff here
             self.dps_list.append(damage / (duration / 1000))
             # end any trinkets that are currently active
             if self.toon.trinkets is not None:
@@ -231,7 +230,7 @@ class Sim:
             if self.log_this is True:
                 self.log.add_damage(self.vt, new_damage, self.time)
             damage += new_damage
-        if self.mf.duration >= 0 and self.mf.duration in act.ticks:
+        if self.mf.duration >= 0 and self.mf.duration in self.mf.ticks:
             new_damage = self.deal_damage(self.mf)
             if self.log_this is True:
                 self.log.add_damage(self.mf, new_damage, self.time)
@@ -261,7 +260,7 @@ class Sim:
 
     def apply_dot(self, dot):
         if self.try_hit(dot) is True:
-            dot.reset_time()
+            dot.reset_time(self.toon, self.time)
             if self.log_this is True:
                 self.log.add_dot_application(dot, self.time)
         self.toon.cur_mana -= dot.mana_cost
@@ -281,9 +280,8 @@ class Sim:
             self.duration = 0
             if self.current_action is not None:
                 self.current_action.set_action_time(toon, time_inc)
-                # I'm not sure this will work but I'm on my ipad rn so I can't check easily
-                if isinstance(self.current_action, MindFlay):
-                	self.ticks = mf.get_ticks(time_inc, toon)
+                if self.current_action.name == 'Mind Flay':
+                    self.ticks = self.current_action.get_ticks(time_inc, toon)
 
     class Spell:
         def __init__(self):
@@ -369,17 +367,18 @@ class Sim:
             self.mana_cost = 196
             self.base_dmg = 176
             self.coefficient = .19
-            
+
         def get_ticks(self, time_inc, toon):
-			# so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head around this
-			ticks = [0, 1000, 2000]
-				for x in ticks:
-					x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
-			return ticks	
-			
-		def reset_time(toon, time_inc):
-			self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
-					
+            # so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head
+            # around this
+            ticks = [0, 1000, 2000]
+            for x in ticks:
+                x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
+            return ticks
+
+        def reset_time(self, toon, time_inc):
+            self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
+
     class MindBlast(DirectSpell):
         def __init__(self, toon):
             super().__init__()
@@ -390,9 +389,8 @@ class Sim:
             self.mana_cost = 382
             self.base_dmg = [711, 752]
             self.coefficient = .429
-            
+
             self.get_cd(toon)
-           
 
         def get_cd(self, toon):
             self.max_cooldown -= 500 * toon.improved_mind_blast
