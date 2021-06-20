@@ -19,14 +19,6 @@ class Player:
         self.trinkets = [None, None]
         self.wand_dps = 0
 
-        self.stat_key = {
-            'spp': self.spell_power,
-            'spc': self.spell_crit,
-            'sph': self.spell_haste,
-            'spi': self.spirit,
-            'int': self.intellect
-        }
-
     def assign_dict_stats(self, stats_dict):
         for key, value in stats_dict.items():
             if key == 'spell_power':
@@ -77,4 +69,15 @@ class Player:
         return answer
 
     def modify_stat(self, string, amt):
-        self.stat_key[string] += amt
+        if string == 'spp':
+            self.spell_power += amt
+        elif string == 'sph':
+            self.spell_haste += amt
+        elif string == 'spc':
+            self.spell_crit += amt
+        elif string == 'spi':
+            self.spirit += amt
+        elif string == 'int':
+            self.intellect += amt
+        else:
+            print('Invalid string {} passed to player.modify_stat.'.format(string))

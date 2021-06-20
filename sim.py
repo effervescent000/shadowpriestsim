@@ -92,7 +92,8 @@ class Sim:
                         # now check for shadowfiend
                         if mana < max_mana * .3 and mana_pot_cd > 2000 \
                                 and shadowfiend_available:
-                            # numbers based on https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
+                            # numbers based on
+                            # https://web.archive.org/web/20100209225350/http://shadowpriest.com/viewtopic.php?f=13&t=7616
                             shadowfiend_mana = (2977 + self.toon.spell_power * 1.5) * .8 * 1 - .16 + self.toon.spell_hit
                             # the .8 modifier is assuming that the part has some shadow resist
                             self.toon.add_mana(shadowfiend_mana)
@@ -132,6 +133,8 @@ class Sim:
                                 self.mf = self.apply_dot(self.mf)
                                 act = self.Action(self.toon, time_inc, self.mf)
                                 gcd = self.get_gcd()
+                        # TODO make it so that if the simmed toon goes OOM, it will sit and wand and regen for a bit
+                        #  rather blowing all its mana mind flaying
                         # wand if OOM
                         # TODO improve wanding logic
                         else:
@@ -186,7 +189,7 @@ class Sim:
         if self.log_this is True:
             self.log.add_other(self.time, 'Trinket {0} effect removed.'.format(t.name))
 
-    def is_channeling_mindflay(self, act):
+    def is_channeling_mind_flay(self, act):
         if act.current_action is self.mf and act.current_action.duration < 3:
             return True
         else:
@@ -200,7 +203,7 @@ class Sim:
             gcd = 750
         return gcd
 
-    def clip_mind_flay(self, act=None):
+    def clip_mind_flay(self):
         if self.mf.duration > 0:
             self.mf.duration = -1
             # setting this to -.25 to prevent it accidentally ticking on 0 (which would normally be the last tick)
@@ -231,7 +234,7 @@ class Sim:
         return damage
 
     def deal_damage(self, spell):
-        # extra modifiers are shadow weaving and misery, and shadowform
+        # extra modifiers are shadow weaving, misery, and shadowform
         return round(spell.get_damage() + self.toon.spell_power * spell.coefficient * 1.10 * 1.05 * 1.15)
 
     def calc_damage(self, spell):
@@ -282,7 +285,9 @@ class Sim:
             if self.action_time > 0:
                 self.action_time = self.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
 
-        def round_to_base(self, num, base):
+        @staticmethod
+        # may be worth adding this to a utils file or something instead of having it here
+        def round_to_base(num, base):
             return base * round(num / base)
 
         def get_damage(self):
@@ -298,7 +303,7 @@ class Sim:
             self.mana_cost = 0
             self.base_dmg = 0
             self.coefficient = 0
-            # TODO add spellpower snapshotting
+            # TODO add spell power snapshotting
 
         def reset_time(self):
             self.duration = self.max_duration
