@@ -5,7 +5,8 @@ from openpyxl import load_workbook
 class ParseFile:
 
     def __init__(self, fn):
-        # TODO rehaul this code to read from a txt file rather than a spreadsheet
+        # TODO overhaul this code to read from a txt file rather than a spreadsheet. Maybe. I'm not sure how comparisons
+        #  would work with this?
         self.wb = load_workbook(fn)
         self.sheet = self.wb['data']
         self.player = player.Player("priest", 'base')

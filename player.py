@@ -19,6 +19,10 @@ class Player:
         self.trinkets = [None, None]
         self.wand_dps = 0
 
+        # talents. only a couple for now
+        self.improved_mind_blast = 0
+        self.focused_mind = 0
+
     def assign_dict_stats(self, stats_dict):
         for key, value in stats_dict.items():
             if key == 'spell_power':
