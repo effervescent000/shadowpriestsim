@@ -13,9 +13,12 @@ class Player:
         self.spell_crit = 0
         self.intellect = 0
         self.spirit = 0
+
+        # TODO calculate mana from int rather than having to be explicitly told
         self.max_mana = 0
         self.cur_mana = 0
         self.mp5 = 0
+
         self.trinkets = [None, None]
         self.wand_dps = 0
 
@@ -48,6 +51,13 @@ class Player:
             else:
                 print("Invalid value {0} passed to assign_dict_stats!".format(key))
         self.calc_mp5()
+
+    def assign_talents(self, talent_dict):
+        for key, value in talent_dict.items():
+            if key == 'imp mb':
+                self.improved_mind_blast = value
+            elif key == 'fm' or key == 'focused mind':
+                self.focused_mind = value
 
     def calc_mp5(self):
         # calculate casting mp5

@@ -16,6 +16,8 @@ class ParseFile:
         if self.check_comparison() is True:
             col = 3
             comp_num = 1
+            # TODO make it so that empty cells on comparisons are treated as the same as the baseline values (might be
+            #  easier to just copy the baseline toon and then modify its values)
             while self.sheet.cell(2, col).value is not None:
                 new_toon = player.Player("priest", comp_num)
                 self.toons.append(self.parse_toon(new_toon, col))
@@ -33,12 +35,19 @@ class ParseFile:
     def parse_toon(self, toon, col):
         # first set baseline stats
         stats_dict = {}
+        talent_dict = {}
         row = 2
         string = string = self.sheet.cell(row, 1).value
+        talents_row = None
 
         while string != '###talents':
             stats_dict[self.sheet.cell(row, 1).value] = self.sheet.cell(row, col).value
             row += 1
             string = self.sheet.cell(row, 1).value
+            if string == '###talents':
+                talents_row = row + 1
         toon.assign_dict_stats(stats_dict)
+        for x in (talents_row, talents_row + 1):
+            talent_dict[self.sheet.cell(x, 1).value] = self.sheet.cell(x, col).value
+        toon.assign_talents(talent_dict)
         return toon

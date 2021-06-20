@@ -175,6 +175,13 @@ class Sim:
                 self.time += time_inc
 
             self.dps_list.append(damage / (duration / 1000))
+            # end any trinkets that are currently active
+            if self.toon.trinkets is not None:
+                for x in self.toon.trinkets:
+                    if x.active is True:
+                        self.end_trinket_effect(x)
+                    x.reset_trinket()
+
             if self.log_this is True:
                 self.log.finalize_log()
             self.cur_iterations = self.cur_iterations + 1
