@@ -1,5 +1,6 @@
 import math
 import trinket
+import meta_gem
 
 
 class Player:
@@ -23,6 +24,7 @@ class Player:
         self.mp5 = 0
 
         self.trinkets = [None, None]
+        self.meta_gem = None
         self.wand_dps = 0
 
         # talents. only a couple for now
@@ -48,6 +50,8 @@ class Player:
                 self.trinkets[0] = trinket.Trinket(value)
             elif key == 'trinket 2':
                 self.trinkets[1] = trinket.Trinket(value)
+            elif key == 'meta':
+                self.meta_gem = meta_gem.MetaGem(value)
             elif key == 'wand dps':
                 self.wand_dps = value
             else:
