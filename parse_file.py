@@ -37,10 +37,6 @@ class ParseFile:
             if cell[0].value is not None:
                 return True
         return False
-        # if self.sheet.cell(1, col).value is not None:
-        #     return True
-        # else:
-        #     return False
 
     def parse_toon(self, toon, col, base_toon=None):
         # first set baseline stats
