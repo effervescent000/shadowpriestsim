@@ -52,7 +52,7 @@ class Sim:
 
             self.swp = self.ShadowWordPain()
             self.vt = self.VampiricTouch()
-            self.mf = self.MindFlay()
+            self.mf = self.MindFlay(time_inc, self.toon)
             self.mb = self.MindBlast(self.toon)
             self.swd = self.ShadowWordDeath()
 
@@ -142,7 +142,7 @@ class Sim:
                                 self.log.add_wand(wand_damage, self.time)
                             gcd = 10000
 
-                damage += self.tic_dots()
+                damage += self.tic_dots(act)
 
                 # end active trinkets
                 if self.toon.trinkets is not None:
@@ -218,7 +218,7 @@ class Sim:
             if self.log_this is True:
                 self.log.clip_mind_flay(self.time)
 
-    def tic_dots(self):
+    def tic_dots(self, act):
         damage = 0
         if self.swp.duration >= 0 and self.swp.duration % 3000 == 0 and self.swp.duration != 24000:
             new_damage = self.deal_damage(self.swp)
@@ -258,9 +258,9 @@ class Sim:
             self.toon.add_mana(damage * .05)
         return damage
 
-    def apply_dot(self, dot):
+    def apply_dot(self, dot, time_inc=10):
         if self.try_hit(dot) is True:
-            dot.reset_time(self.toon, self.time)
+            dot.reset_time(self.toon, time_inc)
             if self.log_this is True:
                 self.log.add_dot_application(dot, self.time)
         self.toon.cur_mana -= dot.mana_cost
@@ -278,13 +278,14 @@ class Sim:
         def __init__(self, toon, time_inc, act=None):
             self.current_action = act
             self.duration = 0
+            self.ticks = []
             if self.current_action is not None:
                 self.current_action.set_action_time(toon, time_inc)
                 if self.current_action.name == 'Mind Flay':
                     self.ticks = self.current_action.get_ticks(time_inc, toon)
 
     class Spell:
-        def __init__(self):
+        def __init__(self, time_inc, toon):
             self.name = 'unset string'
             self.action_time = 0
             self.base_dmg = 0
@@ -297,8 +298,8 @@ class Sim:
             return self.base_dmg * 1.1
 
     class DoT(Spell):
-        def __init__(self):
-            super().__init__()
+        def __init__(self, time_inc=None, toon=None):
+            super().__init__(time_inc, toon)
             self.name = 'unset string'
             self.action_time = 0
             self.duration = -100
@@ -308,12 +309,12 @@ class Sim:
             self.coefficient = 0
             # TODO add spell power snapshotting
 
-        def reset_time(self):
+        def reset_time(self, toon=None, time=None):
             self.duration = self.max_duration
 
     class DirectSpell(Spell):
-        def __init__(self):
-            super().__init__()
+        def __init__(self,time_inc=None, toon=None):
+            super().__init__(time_inc, toon)
             self.name = 'unset string'
             self.action_time = 0
             self.cooldown = 0
@@ -334,7 +335,7 @@ class Sim:
     class ShadowWordPain(DoT):
 
         def __init__(self):
-            super().__init__()
+            super().__init__(time_inc=None, toon=None)
             self.name = 'Shadow Word: Pain'
             self.action_time = 0
             self.duration = -100
@@ -345,8 +346,8 @@ class Sim:
 
     class VampiricTouch(DoT):
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, time_inc=None, toon=None):
+            super().__init__(time_inc, toon)
             self.name = 'Vampiric Touch'
             self.action_time = 1500
             self.duration = -100
@@ -357,7 +358,7 @@ class Sim:
 
     class MindFlay(DoT):
 
-        def __init__(self):
+        def __init__(self, time_inc=None, toon=None):
             super().__init__()
             self.name = 'Mind Flay'
             self.action_time = 0
@@ -367,17 +368,20 @@ class Sim:
             self.mana_cost = 196
             self.base_dmg = 176
             self.coefficient = .19
+            self.ticks_base = [0, 1000, 2000]
+            self.ticks = self.get_ticks(time_inc, toon)
 
         def get_ticks(self, time_inc, toon):
             # so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head
             # around this
             ticks = [0, 1000, 2000]
-            for x in ticks:
-                x = utils.round_to_base(x / (1 + toon.spell_haste), time_inc)
+            for x in range(0, 2):
+                ticks[x] = utils.round_to_base(ticks[x] / (1 + toon.spell_haste), time_inc)
             return ticks
 
-        def reset_time(self, toon, time_inc):
+        def reset_time(self, toon=None, time_inc=10):
             self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
+            self.duration = self.max_duration
 
     class MindBlast(DirectSpell):
         def __init__(self, toon):

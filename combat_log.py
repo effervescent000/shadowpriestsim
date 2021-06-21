@@ -29,7 +29,7 @@ class CombatLog:
         if self.mode == 'verbose':
             self.log.write('{0}: Wand deals {1} damage.\n'.format(format_time(time), amt))
         elif self.mode == 'stats':
-            self.log.write('Wand\t{}\t{}'.format(format_time(time), amt))
+            self.log.write('{}\tWand\t{}\n'.format(format_time(time), amt))
 
     def add_miss(self, spell, time):
         if self.mode == 'verbose':
