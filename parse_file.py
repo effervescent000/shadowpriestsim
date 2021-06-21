@@ -1,50 +1,65 @@
 import player
 from openpyxl import load_workbook
+import string
+
+int_to_letter = dict(zip(range(1, 27), string.ascii_uppercase))
 
 
 class ParseFile:
 
     def __init__(self, fn):
-        # TODO overhaul this code to read from a txt file rather than a spreadsheet. Maybe. I'm not sure how comparisons
-        #  would work with this?
+        # TODO overhaul this code to read from a CSV file rather than a spreadsheet.
         self.wb = load_workbook(fn)
         self.sheet = self.wb['data']
         self.player = player.Player("priest", 'base')
         col = 2
         self.toons = [self.parse_toon(self.player, col)]
 
-        if self.check_comparison() is True:
-            col = 3
-            comp_num = 1
-            # TODO make it so that empty cells on comparisons are treated as the same as the baseline values (might be
-            #  easier to just copy the baseline toon and then modify its values)
-            while self.sheet.cell(2, col).value is not None:
-                new_toon = player.Player("priest", comp_num)
-                self.toons.append(self.parse_toon(new_toon, col))
-
-                comp_num = comp_num + 1
-                col = col + 1
-
-    def check_comparison(self):
         col = 3
-        if self.sheet.cell(1, col).value is not None:
-            return True
-        else:
-            return False
+        while self.check_comparison(col) is True:
+            comp_num = 1
 
-    def parse_toon(self, toon, col):
+            title = self.sheet.cell(1, col).value
+            if title is not None:
+                comp_name = title
+            else:
+                comp_name = comp_num
+            new_toon = player.Player("priest", comp_name)
+            self.toons.append(self.parse_toon(new_toon, col, self.toons[0]))
+
+            comp_num += 1
+            col += 1
+
+    def check_comparison(self, col):
+        col = int_to_letter[col]
+        cell_range = self.sheet['{}1'.format(col):'{}13'.format(col)]
+        for cell in cell_range:
+            if cell[0].value is not None:
+                return True
+        return False
+        # if self.sheet.cell(1, col).value is not None:
+        #     return True
+        # else:
+        #     return False
+
+    def parse_toon(self, toon, col, base_toon=None):
         # first set baseline stats
         stats_dict = {}
         talent_dict = {}
         row = 2
-        string = string = self.sheet.cell(row, 1).value
+        txt = self.sheet.cell(row, 1).value
         talents_row = None
 
-        while string != '###talents':
-            stats_dict[self.sheet.cell(row, 1).value] = self.sheet.cell(row, col).value
+        while txt != '###talents':
+            val = self.sheet.cell(row, col).value
+            if val is not None:
+                stats_dict[txt] = val
+            else:
+                stats_dict[txt] = base_toon.stats_dict[txt]
+
             row += 1
-            string = self.sheet.cell(row, 1).value
-            if string == '###talents':
+            txt = self.sheet.cell(row, 1).value
+            if txt == '###talents':
                 talents_row = row + 1
         toon.assign_dict_stats(stats_dict)
         for x in (talents_row, talents_row + 1):

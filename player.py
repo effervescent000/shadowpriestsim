@@ -14,7 +14,10 @@ class Player:
         self.intellect = 0
         self.spirit = 0
 
-        # TODO calculate mana from int rather than having to be explicitly told
+        self.stats_dict = {}
+        # storing the dict that's passed in populating the above stats so that stats can be more easily pulled from a
+        # base toon for comparison toons
+
         self.max_mana = 0
         self.cur_mana = 0
         self.mp5 = 0
@@ -48,6 +51,7 @@ class Player:
                 self.wand_dps = value
             else:
                 print("Invalid value {0} passed to assign_dict_stats!".format(key))
+        self.stats_dict = stats_dict
         self.max_mana = 2620 + 20 + (15 * (self.intellect - 20))
         self.calc_mp5()
 
