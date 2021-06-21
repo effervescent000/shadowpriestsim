@@ -1,3 +1,6 @@
+import utils
+
+
 class MetaGem:
     def __init__(self, name):
         self.name = name.lower()
@@ -17,9 +20,9 @@ class MetaGem:
             self.max_cooldown = 45000
             self.max_duration = 10000
             self.proc_chance = .15
-            self.stat = [320, 'sph']
+            self.stat = [utils.convert_spell_haste(320), 'sph']
 
-    def proc(self):
+    def start_effect(self):
         self.cooldown = self.max_cooldown
         self.duration = self.max_duration
         self.active = True
