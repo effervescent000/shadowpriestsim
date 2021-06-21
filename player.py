@@ -28,6 +28,7 @@ class Player:
         # talents. only a couple for now
         self.improved_mind_blast = 0
         self.focused_mind = 0
+        self.inner_focus = 0
 
     def assign_dict_stats(self, stats_dict):
         for key, value in stats_dict.items():
@@ -61,6 +62,8 @@ class Player:
                 self.improved_mind_blast = value
             elif key == 'fm' or key == 'focused mind':
                 self.focused_mind = value
+            elif key == 'if' or key == 'inner focus':
+                self.inner_focus = value
 
     def calc_mp5(self):
         # calculate casting mp5

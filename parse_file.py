@@ -58,7 +58,7 @@ class ParseFile:
             if txt == '###talents':
                 talents_row = row + 1
         toon.assign_dict_stats(stats_dict)
-        for x in (talents_row, talents_row + 1):
+        for x in (talents_row, talents_row + 3):
             talent_dict[self.sheet.cell(x, 1).value] = self.sheet.cell(x, col).value
         toon.assign_talents(talent_dict)
         return toon

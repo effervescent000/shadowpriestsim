@@ -19,6 +19,7 @@ class Sim:
         self.mf = None
         self.mb = None
         self.swd = None
+        self.inf = None
 
         self.run_iterations(total_iterations, duration, logging)
         self.dps = sum(self.dps_list) / len(self.dps_list)
@@ -55,9 +56,9 @@ class Sim:
             self.mf = self.MindFlay(time_inc, self.toon)
             self.mb = self.MindBlast(self.toon)
             self.swd = self.ShadowWordDeath()
+            self.inf = self.InnerFocus()
 
             while self.time < duration:
-                # TODO implement inner focus
                 self.toon.add_mana(mana_regen)
                 mana = self.toon.cur_mana
                 max_mana = self.toon.max_mana
@@ -67,6 +68,10 @@ class Sim:
                         if act.current_action is self.mb:
                             self.mb.reset_time()
                             damage += self.calc_damage(self.mb)
+                            # if self.inf.active is True:
+                            #     self.inf.start_cooldown()
+                            #     if self.log_this is True:
+                            #         self.log.add_other(self.time, 'Inner Focus removed.')
                         elif act.current_action is self.vt:
                             self.vt = self.apply_dot(self.vt)
                     if gcd <= 0:
@@ -106,7 +111,15 @@ class Sim:
 
                         # spell logic goes here
                         elif self.swp.duration < 0 and mana > self.swp.mana_cost:
-                            self.swp = self.apply_dot(self.swp)
+                            if self.inf.cooldown <= 0:
+                                self.inf.use()
+                                if self.log_this is True:
+                                    self.log.add_other(self.time, 'Inner Focus activated.')
+                            self.swp = self.apply_dot(self.swp, time_inc, self.inf)
+                            if self.inf.active is True:
+                                self.inf.start_cooldown()
+                                if self.log_this is True:
+                                    self.log.add_other(self.time, 'Inner Focus removed.')
                             act = self.Action(self.toon, time_inc, self.swp)
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
@@ -117,6 +130,10 @@ class Sim:
                                 self.log.add_other(self.time, 'Vampiric Touch begins casting.')
                             gcd = self.get_gcd()
                         elif self.mb.cooldown <= 0 and mana > self.mb.mana_cost:
+                            # if self.inf.cooldown <= 0:
+                            #     self.inf.use()
+                            #     if self.log_this is True:
+                            #         self.log.add_other(self.time, 'Inner Focus activated.')
                             act = self.Action(self.toon, time_inc, self.mb)
                             self.clip_mind_flay()
                             if self.log_this is True:
@@ -161,6 +178,7 @@ class Sim:
                                     x.use_trinket()
                                     self.start_trinket_effect(x)
 
+                self.inf.cooldown -= time_inc
                 mana_pot_cd -= time_inc
                 self.swp.duration -= time_inc
                 self.vt.duration -= time_inc
@@ -243,14 +261,18 @@ class Sim:
         # extra modifiers are shadow weaving, misery, and shadowform
         return round((spell.get_damage() + self.toon.spell_power * spell.coefficient) * 1.10 * 1.05 * 1.15)
 
-    def calc_damage(self, spell):
+    def calc_damage(self, spell, inner_focus=None):
         damage = 0
-        self.toon.cur_mana -= spell.mana_cost
+        if (inner_focus is not None and inner_focus.active is False) or inner_focus is None:
+            self.toon.cur_mana -= spell.mana_cost
 
         if self.try_hit(spell) is True:
             damage = self.deal_damage(spell)
             # extra crit is from shadow power talent
-            if random.random() > 1 - self.toon.spell_crit - .15:
+            crit_mod = .15
+            if inner_focus is not None and inner_focus.active is True:
+                crit_mod += .25
+            if random.random() > 1 - self.toon.spell_crit - crit_mod:
                 damage = damage * 1.5
             if self.log_this is True:
                 self.log.add_damage(spell, damage, self.time)
@@ -258,12 +280,13 @@ class Sim:
             self.toon.add_mana(damage * .05)
         return damage
 
-    def apply_dot(self, dot, time_inc=10):
+    def apply_dot(self, dot, time_inc=10, inner_focus=None):
         if self.try_hit(dot) is True:
             dot.reset_time(self.toon, time_inc)
             if self.log_this is True:
                 self.log.add_dot_application(dot, self.time)
-        self.toon.cur_mana -= dot.mana_cost
+        if (inner_focus is not None and inner_focus.active is False) or inner_focus is None:
+            self.toon.cur_mana -= dot.mana_cost
         return dot
 
     def try_hit(self, spell=None):
@@ -283,6 +306,19 @@ class Sim:
                 self.current_action.set_action_time(toon, time_inc)
                 if self.current_action.name == 'Mind Flay':
                     self.ticks = self.current_action.get_ticks(time_inc, toon)
+
+    class InnerFocus:
+        def __init__(self):
+            self.max_cooldown = 180000
+            self.cooldown = -100
+            self.active = False
+
+        def use(self):
+            self.active = True
+
+        def start_cooldown(self):
+            self.active = False
+            self.cooldown = self.max_cooldown
 
     class Spell:
         def __init__(self, time_inc, toon):
