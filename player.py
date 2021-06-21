@@ -38,8 +38,6 @@ class Player:
                 self.intellect = value
             elif key == 'spirit':
                 self.spirit = value
-            elif key == 'mana':
-                self.max_mana = value
             elif key == 'spell_haste':
                 self.spell_haste = value
             elif key == 'trinket 1':
@@ -50,6 +48,7 @@ class Player:
                 self.wand_dps = value
             else:
                 print("Invalid value {0} passed to assign_dict_stats!".format(key))
+        self.max_mana = 2620 + 20 + (15 * (self.intellect - 20))
         self.calc_mp5()
 
     def assign_talents(self, talent_dict):
