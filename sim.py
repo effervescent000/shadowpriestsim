@@ -4,12 +4,13 @@ import utils
 
 
 class Sim:
-    def __init__(self, toon, total_iterations, duration, logging=False, mode=None):
+    def __init__(self, toon, total_iterations, duration, logging=False, mode=None, debug=False):
         self.dps = 0
         self.dps_list = []
         self.cur_iterations = 0
         self.time = 0
         self.toon = toon
+        self.debug = debug
         self.log_this = False
         if logging is True:
             self.log = combat_log.CombatLog(mode=mode)
@@ -33,12 +34,16 @@ class Sim:
 
         if logging is True:
             # pick a random iteration to log
-            iteration_to_log = random.randint(1, total_iterations - 1)
+            if total_iterations == 1:
+                iteration_to_log = 1
+            else:
+                iteration_to_log = random.randint(1, total_iterations)
 
-        while self.cur_iterations < total_iterations:
+        while self.cur_iterations <= total_iterations:
             if logging is True:
                 if iteration_to_log == self.cur_iterations:
                     self.log_this = True
+                    self.log.add_other(0.0, 'Logging iteration {}.'.format(self.cur_iterations))
                 elif iteration_to_log < self.cur_iterations:
                     self.log_this = False
             duration = base_duration * (random.randint(8, 12) / 10)
@@ -74,6 +79,13 @@ class Sim:
                             #         self.log.add_other(self.time, 'Inner Focus removed.')
                         elif act.current_action is self.vt:
                             self.vt = self.apply_dot(self.vt)
+
+                        # remove mystical skyfire diamond effect after a completed cast
+                        meta = self.toon.meta_gem
+                        if meta.name == 'MSD' and meta.active is True:
+                            meta.active = False
+                            self.end_meta_effect(meta)
+
                     if gcd <= 0:
                         # use trinkets if possible
                         if self.toon.trinkets is not None:
@@ -84,7 +96,7 @@ class Sim:
                                         trinket_gcd = 30000
                                         break
 
-                                    # TODO figure out how to only clip Mind Flay if it's shortly after a tick
+                        # TODO figure out how to only clip Mind Flay if it's shortly after a tick
                         # check for mana pot
                         if mana + 3000 < max_mana and mana_pot_cd <= 0:
                             mana_pot_cd = 120000
@@ -120,16 +132,19 @@ class Sim:
                                 self.inf.start_cooldown()
                                 if self.log_this is True:
                                     self.log.add_other(self.time, 'Inner Focus removed.')
+                            self.check_procs(proc_trinkets, self.toon.meta_gem)
                             act = self.Action(self.toon, time_inc, self.swp)
                             self.clip_mind_flay()
                             gcd = self.get_gcd()
                         elif self.vt.duration < 1500 and mana > self.vt.mana_cost:
+                            self.check_procs(proc_trinkets, self.toon.meta_gem)
                             act = self.Action(self.toon, time_inc, self.vt)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, 'Vampiric Touch begins casting.')
                             gcd = self.get_gcd()
                         elif self.mb.cooldown <= 0 and mana > self.mb.mana_cost:
+                            self.check_procs(proc_trinkets, self.toon.meta_gem)
                             # if self.inf.cooldown <= 0:
                             #     self.inf.use()
                             #     if self.log_this is True:
@@ -140,16 +155,21 @@ class Sim:
                                 self.log.add_other(self.time, 'Mind Blast begins casting.')
                             gcd = self.get_gcd()
                         elif self.swd.cooldown <= 0 and mana > self.swd.mana_cost:
+                            self.check_procs(proc_trinkets, self.toon.meta_gem)
                             self.swd.reset_time()
                             act = self.Action(self.toon, time_inc, self.swd)
                             self.clip_mind_flay()
                             damage += self.calc_damage(self.swd)
                             gcd = self.get_gcd()
                         elif mana > self.mf.mana_cost:
-                            if act.current_action is not self.mf:
+                            if act.current_action != self.mf or \
+                                    (act.current_action == self.mf and self.mf.duration < 0):
+                                self.check_procs(proc_trinkets, self.toon.meta_gem)
                                 self.mf = self.apply_dot(self.mf)
                                 act = self.Action(self.toon, time_inc, self.mf)
                                 gcd = self.get_gcd()
+                                # TODO ensure that if a new MF channel starts with MSD up, the proc gets removed after
+                                #  channel time/ticks are calculated
                         # sit and wand for 10 seconds if OOM
                         # TODO get actual wand stats and sim wands
                         else:
@@ -169,16 +189,9 @@ class Sim:
                             x.active = False
                         x.increment_time(time_inc)
 
-                # see if trinket proc'd from this action
-                if gcd == self.get_gcd():
-                    if proc_trinkets[0] is True:
-                        for x in proc_trinkets[1]:
-                            if x.cooldown <= 0:
-                                if random.random() < x.proc_chance:
-                                    x.use_trinket()
-                                    self.start_trinket_effect(x)
-
                 self.inf.cooldown -= time_inc
+                self.toon.meta_gem.duration -= time_inc
+                self.toon.meta_gem.cooldown -= time_inc
                 mana_pot_cd -= time_inc
                 self.swp.duration -= time_inc
                 self.vt.duration -= time_inc
@@ -192,16 +205,48 @@ class Sim:
 
             # end of iteration stuff here
             self.dps_list.append(damage / (duration / 1000))
-            # end any trinkets that are currently active
+            # end any trinkets/meta gems that are currently active
             if self.toon.trinkets is not None:
                 for x in self.toon.trinkets:
                     if x.active is True:
                         self.end_trinket_effect(x)
                     x.reset_trinket()
+            if self.toon.meta_gem is not None:
+                meta = self.toon.meta_gem
+                if meta.active is True:
+                    meta.active = False
+                    self.end_meta_effect(meta)
 
             if self.log_this is True:
                 self.log.finalize_log()
             self.cur_iterations += 1
+
+    def check_procs(self, proc_trinkets, meta_gem):
+        # see if trinket proc'd from this action
+        if proc_trinkets[0] is True:
+            for x in proc_trinkets[1]:
+                if x.cooldown <= 0:
+                    if random.random() < x.proc_chance:
+                        x.use_trinket()
+                        self.start_trinket_effect(x)
+
+        # see if meta gem proc'd from this action
+        if meta_gem is not None and meta_gem.proc_chance > 0:
+            if meta_gem.cooldown <= 0:
+                if random.random() < meta_gem.proc_chance:
+                    self.start_meta_effect(meta_gem)
+
+    # TODO see if I can find a good way to combine the meta gem and trinket methods
+    def start_meta_effect(self, m):
+        m.start_effect()
+        if self.log_this is True:
+            self.log.add_other(self.time, 'Meta gem {0} procced.'.format(m.name))
+        self.toon.modify_stat(m.stat[1], m.stat[0])
+
+    def end_meta_effect(self, m):
+        self.toon.modify_stat(m.stat[1], m.stat[0] * -1)
+        if self.log_this is True:
+            self.log.add_other(self.time, 'Meta gem {0} effect removed.'.format(m.name))
 
     def start_trinket_effect(self, t):
         t.use_trinket()
@@ -220,10 +265,10 @@ class Sim:
         else:
             return False
 
-    def get_gcd(self, time_inc=10):
+    def get_gcd(self, time_inc=100):
         # TODO for now adding in a cludge to mimic latency/reaction time (setting GCD to .1 second higher).
         #  Find a better way to do this.
-        gcd = utils.round_to_base(1600 / (1 + self.toon.spell_haste), time_inc)
+        gcd = utils.haste_spell(1600, time_inc, self.toon.spell_haste)
         # gcd can't be lowered below .75 seconds
         if gcd < 750:
             gcd = 750
@@ -280,9 +325,9 @@ class Sim:
             self.toon.add_mana(damage * .05)
         return damage
 
-    def apply_dot(self, dot, time_inc=10, inner_focus=None):
+    def apply_dot(self, dot, time_inc=100, inner_focus=None):
         if self.try_hit(dot) is True:
-            dot.reset_time(self.toon, time_inc)
+            dot.reset_time(self.toon, time_inc, self.debug, self.cur_iterations)
             if self.log_this is True:
                 self.log.add_dot_application(dot, self.time)
         if (inner_focus is not None and inner_focus.active is False) or inner_focus is None:
@@ -304,8 +349,8 @@ class Sim:
             self.ticks = []
             if self.current_action is not None:
                 self.current_action.set_action_time(toon, time_inc)
-                if self.current_action.name == 'Mind Flay':
-                    self.ticks = self.current_action.get_ticks(time_inc, toon)
+                # if self.current_action.name == 'Mind Flay':
+                #     self.ticks = self.current_action.get_ticks(time_inc, toon)
 
     class InnerFocus:
         def __init__(self):
@@ -328,7 +373,7 @@ class Sim:
 
         def set_action_time(self, toon, time_inc):
             if self.action_time > 0:
-                self.action_time = utils.round_to_base(self.action_time / (1 - toon.spell_haste), time_inc)
+                self.action_time = utils.haste_spell(self.action_time, time_inc, toon.spell_haste)
 
         def get_damage(self):
             return self.base_dmg * 1.1
@@ -345,11 +390,11 @@ class Sim:
             self.coefficient = 0
             # TODO add spell power snapshotting
 
-        def reset_time(self, toon=None, time=None):
+        def reset_time(self, toon=None, time=None, debug=False, iteration=-1):
             self.duration = self.max_duration
 
     class DirectSpell(Spell):
-        def __init__(self,time_inc=None, toon=None):
+        def __init__(self, time_inc=None, toon=None):
             super().__init__(time_inc, toon)
             self.name = 'unset string'
             self.action_time = 0
@@ -394,7 +439,7 @@ class Sim:
 
     class MindFlay(DoT):
 
-        def __init__(self, time_inc=None, toon=None):
+        def __init__(self, time_inc=None, toon=None, iteration=-1):
             super().__init__()
             self.name = 'Mind Flay'
             self.action_time = 0
@@ -405,19 +450,27 @@ class Sim:
             self.base_dmg = 176
             self.coefficient = .19
             self.ticks_base = [0, 1000, 2000]
-            self.ticks = self.get_ticks(time_inc, toon)
+            self.ticks = self.get_ticks(time_inc, toon, iteration)
 
-        def get_ticks(self, time_inc, toon):
+        def get_ticks(self, time_inc, toon=None, iteration=-1):
             # so MF by default lasts 3 seconds, and there's a tick at 0, 1, and 2 seconds. Just trying to wrap my head
             # around this
-            ticks = [0, 1000, 2000]
-            for x in range(0, 2):
-                ticks[x] = utils.round_to_base(ticks[x] / (1 + toon.spell_haste), time_inc)
+            ticks = [0, utils.round_to_base(self.max_duration * (1 / 3), time_inc),
+                     utils.round_to_base(self.max_duration * (2 / 3), time_inc)]
+            if toon is not None:
+                tick_diff = ticks[2] - ticks[1]
+                if tick_diff < 1000 and toon.meta_gem.active is False:
+                    print('Iteration {}: Time between MF ticks is {} with {}% haste.'.format(iteration, tick_diff,
+                                                                                             toon.spell_haste * 100))
             return ticks
 
-        def reset_time(self, toon=None, time_inc=10):
-            self.max_duration = utils.round_to_base(self.base_duration / (1 + toon.spell_haste), time_inc)
+        def reset_time(self, toon=None, time_inc=100, debug=False, iteration=-1):
+            self.max_duration = utils.haste_spell(self.base_duration, time_inc, toon.spell_haste)
             self.duration = self.max_duration
+            if debug is True:
+                self.ticks = self.get_ticks(time_inc, toon, iteration)
+            else:
+                self.ticks = self.get_ticks(time_inc)
 
     class MindBlast(DirectSpell):
         def __init__(self, toon):

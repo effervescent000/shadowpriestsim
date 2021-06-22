@@ -10,6 +10,7 @@ def main():
     parser.add_argument('-d', '--duration', type=int, default=150)
     parser.add_argument('-sw', action='store_true')
     parser.add_argument('-log', choices=['v', 'verbose', 's', 'stats'])
+    parser.add_argument('-debug', action='store_true')
     args = parser.parse_args()
 
     pf = parse_file.ParseFile('spriest.xlsx')
@@ -24,13 +25,16 @@ def main():
     if args.log is not None:
         log = True
         log_mode = args.log
+    debug = False
+    if args.debug is True:
+        debug = True
     toons = pf.toons
     simmed_dps = {}
     if get_weights is True:
         stat_weights.StatWeights(toons[0], iterations, duration)
     else:
         for x in toons:
-            toon_sim = sim.Sim(x, iterations, duration, log, log_mode)
+            toon_sim = sim.Sim(x, iterations, duration, log, log_mode, debug)
             print('Done simming row {}!'.format(x.name))
             simmed_dps[x.name] = toon_sim.dps
         for x in simmed_dps.items():
