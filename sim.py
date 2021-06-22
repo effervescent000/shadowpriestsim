@@ -27,7 +27,7 @@ class Sim:
 
     def run_iterations(self, total_iterations, duration, logging):
         base_duration = duration * 1000
-        time_inc = 100
+        time_inc = 50
         # I'm fudging mp5 right now
         mana_regen = self.toon.mp5 / 5 * (time_inc / 1000)
         proc_trinkets = self.toon.get_proc_trinkets()
@@ -52,6 +52,7 @@ class Sim:
             damage = 0
             gcd = 0
             trinket_gcd = 0
+            meta_gem = self.toon.meta_gem
             act = self.Action(self.toon, time_inc)
             mana_pot_cd = 0
             shadowfiend_available = True
@@ -78,13 +79,13 @@ class Sim:
                             #     if self.log_this is True:
                             #         self.log.add_other(self.time, 'Inner Focus removed.')
                         elif act.current_action is self.vt:
-                            self.vt = self.apply_dot(self.vt)
+                            self.vt = self.apply_dot(self.vt, time_inc, self.inf)
 
                         # remove mystical skyfire diamond effect after a completed cast
-                        meta = self.toon.meta_gem
-                        if meta.name == 'MSD' and meta.active is True:
-                            meta.active = False
-                            self.end_meta_effect(meta)
+
+                        if meta_gem.name == 'MSD' and meta_gem.active is True:
+                            meta_gem.active = False
+                            self.end_meta_effect(meta_gem)
 
                     if gcd <= 0:
                         # use trinkets if possible
@@ -119,7 +120,7 @@ class Sim:
                             if self.log_this is True:
                                 self.log.add_mana_regen(shadowfiend_mana, self.time)
                             self.clip_mind_flay()
-                            gcd = self.get_gcd()
+                            gcd = self.get_gcd(time_inc)
 
                         # spell logic goes here
                         elif self.swp.duration < 0 and mana > self.swp.mana_cost:
@@ -132,19 +133,19 @@ class Sim:
                                 self.inf.start_cooldown()
                                 if self.log_this is True:
                                     self.log.add_other(self.time, 'Inner Focus removed.')
-                            self.check_procs(proc_trinkets, self.toon.meta_gem)
+                            self.check_procs(proc_trinkets, meta_gem)
                             act = self.Action(self.toon, time_inc, self.swp)
                             self.clip_mind_flay()
-                            gcd = self.get_gcd()
+                            gcd = self.get_gcd(time_inc)
                         elif self.vt.duration < 1500 and mana > self.vt.mana_cost:
-                            self.check_procs(proc_trinkets, self.toon.meta_gem)
+                            self.check_procs(proc_trinkets, meta_gem)
                             act = self.Action(self.toon, time_inc, self.vt)
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, 'Vampiric Touch begins casting.')
-                            gcd = self.get_gcd()
+                            gcd = self.get_gcd(time_inc)
                         elif self.mb.cooldown <= 0 and mana > self.mb.mana_cost:
-                            self.check_procs(proc_trinkets, self.toon.meta_gem)
+                            self.check_procs(proc_trinkets, meta_gem)
                             # if self.inf.cooldown <= 0:
                             #     self.inf.use()
                             #     if self.log_this is True:
@@ -153,21 +154,21 @@ class Sim:
                             self.clip_mind_flay()
                             if self.log_this is True:
                                 self.log.add_other(self.time, 'Mind Blast begins casting.')
-                            gcd = self.get_gcd()
+                            gcd = self.get_gcd(time_inc)
                         elif self.swd.cooldown <= 0 and mana > self.swd.mana_cost:
-                            self.check_procs(proc_trinkets, self.toon.meta_gem)
+                            self.check_procs(proc_trinkets, meta_gem)
                             self.swd.reset_time()
                             act = self.Action(self.toon, time_inc, self.swd)
                             self.clip_mind_flay()
                             damage += self.calc_damage(self.swd)
-                            gcd = self.get_gcd()
+                            gcd = self.get_gcd(time_inc)
                         elif mana > self.mf.mana_cost:
                             if act.current_action != self.mf or \
                                     (act.current_action == self.mf and self.mf.duration < 0):
-                                self.check_procs(proc_trinkets, self.toon.meta_gem)
-                                self.mf = self.apply_dot(self.mf)
+                                self.check_procs(proc_trinkets, meta_gem)
+                                self.mf = self.apply_dot(self.mf, time_inc, self.inf)
                                 act = self.Action(self.toon, time_inc, self.mf)
-                                gcd = self.get_gcd()
+                                gcd = self.get_gcd(time_inc)
                                 # TODO ensure that if a new MF channel starts with MSD up, the proc gets removed after
                                 #  channel time/ticks are calculated
                         # sit and wand for 10 seconds if OOM
@@ -190,8 +191,8 @@ class Sim:
                         x.increment_time(time_inc)
 
                 self.inf.cooldown -= time_inc
-                self.toon.meta_gem.duration -= time_inc
-                self.toon.meta_gem.cooldown -= time_inc
+                meta_gem.duration -= time_inc
+                meta_gem.cooldown -= time_inc
                 mana_pot_cd -= time_inc
                 self.swp.duration -= time_inc
                 self.vt.duration -= time_inc
@@ -211,11 +212,10 @@ class Sim:
                     if x.active is True:
                         self.end_trinket_effect(x)
                     x.reset_trinket()
-            if self.toon.meta_gem is not None:
-                meta = self.toon.meta_gem
-                if meta.active is True:
-                    meta.active = False
-                    self.end_meta_effect(meta)
+            if meta_gem is not None:
+                if meta_gem.active is True:
+                    meta_gem.active = False
+                    self.end_meta_effect(meta_gem)
 
             if self.log_this is True:
                 self.log.finalize_log()
@@ -265,7 +265,7 @@ class Sim:
         else:
             return False
 
-    def get_gcd(self, time_inc=100):
+    def get_gcd(self, time_inc):
         # TODO for now adding in a cludge to mimic latency/reaction time (setting GCD to .1 second higher).
         #  Find a better way to do this.
         gcd = utils.haste_spell(1600, time_inc, self.toon.spell_haste)
@@ -325,7 +325,7 @@ class Sim:
             self.toon.add_mana(damage * .05)
         return damage
 
-    def apply_dot(self, dot, time_inc=100, inner_focus=None):
+    def apply_dot(self, dot, time_inc, inner_focus=None):
         if self.try_hit(dot) is True:
             dot.reset_time(self.toon, time_inc, self.debug, self.cur_iterations)
             if self.log_this is True:
