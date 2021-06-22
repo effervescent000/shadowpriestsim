@@ -232,7 +232,7 @@ class Sim:
 
         # see if meta gem proc'd from this action
         if meta_gem is not None and meta_gem.proc_chance > 0:
-            if meta_gem.cooldown <= 0:
+            if meta_gem.cooldown <= 0 and meta_gem.active is False:
                 if random.random() < meta_gem.proc_chance:
                     self.start_meta_effect(meta_gem)
 
