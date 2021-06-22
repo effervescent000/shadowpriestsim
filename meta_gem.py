@@ -21,6 +21,8 @@ class MetaGem:
             self.max_duration = 10000
             self.proc_chance = .15
             self.stat = [utils.convert_spell_haste(320), 'sph']
+        if 'chaotic' in self.name:
+            self.name = 'CSD'
 
     def start_effect(self):
         self.cooldown = self.max_cooldown

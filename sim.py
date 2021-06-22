@@ -318,7 +318,7 @@ class Sim:
             if inner_focus is not None and inner_focus.active is True:
                 crit_mod += .25
             if random.random() > 1 - self.toon.spell_crit - crit_mod:
-                damage = damage * 1.5
+                damage *= self.toon.crit_multiplier
             if self.log_this is True:
                 self.log.add_damage(spell, damage, self.time)
         if self.vt.duration >= 0:

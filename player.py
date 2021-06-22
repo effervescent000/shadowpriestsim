@@ -1,6 +1,7 @@
 import math
 import trinket
 import meta_gem
+import utils
 
 
 class Player:
@@ -12,6 +13,7 @@ class Player:
         self.spell_hit = 0
         self.spell_haste = 0
         self.spell_crit = 0
+        self.crit_multiplier = 1.5
         self.intellect = 0
         self.spirit = 0
 
@@ -59,6 +61,13 @@ class Player:
         self.stats_dict = stats_dict
         self.max_mana = 2620 + 20 + (15 * (self.intellect - 20))
         self.calc_mp5()
+        self.assign_meta_stats()
+
+    def assign_meta_stats(self):
+        if self.meta_gem is not None:
+            if self.meta_gem.name == 'CSD':
+                self.spell_crit += utils.convert_spell_crit(12)
+                self.crit_multiplier *= 1.03
 
     def assign_talents(self, talent_dict):
         for key, value in talent_dict.items():
