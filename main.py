@@ -13,6 +13,9 @@ def main():
     parser.add_argument('-debug', action='store_true')
     args = parser.parse_args()
 
+    # TODO make it so that if there's no file, a new spreadsheet called spriest.xlsx (or an CSV file if I transition
+    #  to that) will be created
+
     pf = parse_file.ParseFile('spriest.xlsx')
     iterations = args.iterations
     duration = args.duration
