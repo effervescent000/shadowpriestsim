@@ -84,8 +84,8 @@ class Sim:
                         # remove mystical skyfire diamond effect after a completed cast
 
                         if meta_gem.name == 'MSD' and meta_gem.active is True:
-                            meta_gem.active = False
-                            self.end_meta_effect(meta_gem)
+                            # meta_gem.active = False
+                            self.end_special_effect(meta_gem)
 
                     if gcd <= 0:
                         # use trinkets if possible
@@ -93,7 +93,7 @@ class Sim:
                             if trinket_gcd <= 0:
                                 for x in self.toon.trinkets:
                                     if x.cooldown <= 0:
-                                        self.start_trinket_effect(x)
+                                        self.start_special_effect(x)
                                         trinket_gcd = 30000
                                         break
 
@@ -171,6 +171,8 @@ class Sim:
                                 gcd = self.get_gcd(time_inc)
                                 # TODO ensure that if a new MF channel starts with MSD up, the proc gets removed after
                                 #  channel time/ticks are calculated
+                                if meta_gem is not None and meta_gem.name == 'MSD' and meta_gem.active is True:
+                                    self.end_special_effect(meta_gem)
                         # sit and wand for 10 seconds if OOM
                         # TODO get actual wand stats and sim wands
                         else:
@@ -186,7 +188,7 @@ class Sim:
                 if self.toon.trinkets is not None:
                     for x in self.toon.trinkets:
                         if x.active is True and x.duration <= 0:
-                            self.end_trinket_effect(x)
+                            self.end_special_effect(x)
                             x.active = False
                         x.increment_time(time_inc)
 
@@ -210,12 +212,12 @@ class Sim:
             if self.toon.trinkets is not None:
                 for x in self.toon.trinkets:
                     if x.active is True:
-                        self.end_trinket_effect(x)
-                    x.reset_trinket()
+                        self.end_special_effect(x)
+                    x.reset_item()
             if meta_gem is not None:
                 if meta_gem.active is True:
-                    meta_gem.active = False
-                    self.end_meta_effect(meta_gem)
+                    # meta_gem.active = False
+                    self.end_special_effect(meta_gem)
 
             if self.log_this is True:
                 self.log.finalize_log()
@@ -227,37 +229,26 @@ class Sim:
             for x in proc_trinkets[1]:
                 if x.cooldown <= 0:
                     if random.random() < x.proc_chance:
-                        x.use_trinket()
-                        self.start_trinket_effect(x)
+                        x.trigger_effect()
+                        self.start_special_effect(x)
 
         # see if meta gem proc'd from this action
         if meta_gem is not None and meta_gem.proc_chance > 0:
             if meta_gem.cooldown <= 0 and meta_gem.active is False:
                 if random.random() < meta_gem.proc_chance:
-                    self.start_meta_effect(meta_gem)
+                    self.start_special_effect(meta_gem)
 
-    # TODO see if I can find a good way to combine the meta gem and trinket methods
-    def start_meta_effect(self, m):
-        m.start_effect()
+    def start_special_effect(self, effect):
+        effect.trigger_effect()
         if self.log_this is True:
-            self.log.add_other(self.time, 'Meta gem {0} procced.'.format(m.name))
-        self.toon.modify_stat(m.stat[1], m.stat[0])
+            self.log.add_other(self.time, 'Special effect {0} triggered.'.format(effect.name))
+        self.toon.modify_stat(effect.stat[1], effect.stat[0])
 
-    def end_meta_effect(self, m):
-        self.toon.modify_stat(m.stat[1], m.stat[0] * -1)
+    def end_special_effect(self, effect):
+        effect.active = False
+        self.toon.modify_stat(effect.stat[1], effect.stat[0] * -1)
         if self.log_this is True:
-            self.log.add_other(self.time, 'Meta gem {0} effect removed.'.format(m.name))
-
-    def start_trinket_effect(self, t):
-        t.use_trinket()
-        if self.log_this is True:
-            self.log.add_other(self.time, 'Trinket {0} used.'.format(t.name))
-        self.toon.modify_stat(t.stat[1], t.stat[0])
-
-    def end_trinket_effect(self, t):
-        self.toon.modify_stat(t.stat[1], t.stat[0] * -1)
-        if self.log_this is True:
-            self.log.add_other(self.time, 'Trinket {0} effect removed.'.format(t.name))
+            self.log.add_other(self.time, 'Special effect {0} removed.'.format(effect.name))
 
     def is_channeling_mind_flay(self, act):
         if act.current_action is self.mf and act.current_action.duration < act.current_action.max_duration:

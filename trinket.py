@@ -1,14 +1,9 @@
-class Trinket:
+import special_effect
+
+
+class Trinket(special_effect.SpecialEffect):
     def __init__(self, name):
-        self.name = name.lower()
-        self.stat = [0, None]  # valid options are spp, spc, sph (haste), spi, int
-        self.max_cooldown = 0
-        self.cooldown = 0
-        self.max_duration = 0
-        self.duration = 0
-        self.on_use = True
-        self.proc_chance = 0
-        self.active = False
+        super().__init__(name)
 
         self.get_trinket()
 
@@ -36,16 +31,4 @@ class Trinket:
             self.max_cooldown = 300000
             self.max_duration = 20000
 
-    def use_trinket(self):
-        self.cooldown = self.max_cooldown
-        self.duration = self.max_duration
-        self.active = True
 
-    def increment_time(self, time_inc):
-        self.cooldown = self.cooldown - time_inc
-        self.duration = self.duration - time_inc
-
-    def reset_trinket(self):
-        self.active = False
-        self.cooldown = 0
-        self.duration = 0
